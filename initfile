@@ -1,0 +1,278 @@
+# == lnmp-70 v0.0.1 ==
+###############################################################################
+# -- 1. Path Environment Variable.
+###############################################################################
+# -- Setup UserName. --
+USER_NAME=username
+#
+# -- Install Shell Script Path.
+INSTALL_PATH=/home/${USER_NAME}/install
+#
+###############################################################################
+# -- 1-2. Base Environment Variable. --
+###############################################################################
+# -- Domain Name. --
+SETUP_WEBSERVER_HOSTNAME=localhost
+#
+# -- Local Access IP. / Local Access Network Only. --
+LOCAL_IP_ADDR=192.168.1.0/24
+#
+# -- Global Access IP. or Static IP. --
+GLOBAL_IP_ADDR=
+#
+# -- Server Static IP. --
+SERVER_STATIC_IP_ADDR=
+#
+# -- SSH Access Network Hosts. / Local Access Network Only. --
+LOCAL_IP_HOSTS=192.168.1.
+#
+# -- Global IP. / Provider Host. --
+GLOBAL_ACCESS_HOSTS=
+#
+###############################################################################
+# -- 1-3. iptables-services.
+###############################################################################
+# -- ssh Default Port Number.
+SSH_EDIT_PORT=22
+#
+# -- reverse proxy backend port Number.
+REVERSE_PROXY_PORT=8080
+#
+###############################################################################
+## 1-4-1. Repository Keys.
+###############################################################################
+# -- rpmforge GPG Key.
+RepoRPMForgeGPG=http://apt.sw.be/RPM-GPG-KEY.dag.txt
+# -- eple GPG Key.
+RepoEpelGPG=http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+# -- elrepo GPG Key.
+RepoElrepoGPG=http://elrepo.org/RPM-GPG-KEY-elrepo.org
+# -- remi GPG key.
+RepoRemiGPG=http://rpms.famillecollet.com/RPM-GPG-KEY-remi
+#
+###############################################################################
+## 1-4-2. Repository.
+###############################################################################
+# -- rpmforge.repo
+RepoRPMForgex86=http://apt.sw.be/redhat/el7/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el7.rf.x86_64.rpm
+# -- epel.repo
+RepoEPELx86=http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+# -- elrepo.repo
+RepoElrepox86=http://elrepo.org/linux/elrepo/el7/x86_64/RPMS/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+# -- remi.repo
+RepoRemix86=http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+#
+###############################################################################
+## 1-5. aliases mail address.
+###############################################################################
+# -- logwatch mail.
+ALIASES_ROOT_MAIL_ADDR=info@localhost
+#
+###############################################################################
+## 1-6. tripwire pass.
+###############################################################################
+# -- Tripwire Site Password.
+INITSITEPASS=
+#
+# -- Tripwire Local Password.
+INITLOCALPASS=
+#
+###############################################################################
+## 2.WebServer Environment Variable.
+###############################################################################
+## -- 2-1. HostName Setup Config.
+# -- HOST DOMAIN
+CONFIG_HOST_DOMAIN=${SETUP_WEBSERVER_HOSTNAME}
+#
+## -- Server Static IP
+# -- SSL
+FRONTEND_SERVER_PORT=${SERVER_STATIC_IP_ADDR}:443
+#
+## -- Backend Listen Port.
+BACKEND_LISTEN_PORT=${REVERSE_PROXY_PORT}
+BACKEND_SERVER_PORT=127.0.0.1:${REVERSE_PROXY_PORT}
+#
+###############################################################################
+## 2-2. SSL Setup Config.
+###############################################################################
+# -- SSL Cert Path.
+FRONT_SSL_CERT=/etc/pki/tls/cert/localhost.crt
+#
+# -- SSL Key Path.
+FRONT_SSL_KEY=/etc/pki/tls/private/localhost.pem
+#
+# -- SSL CA Cert Path.
+FRONT_SSLCA_CERT=/etc/pki/tls/cert/ca.crt
+#
+# -- SSL DH Param Path.
+FRONT_SSL_DH=/etc/nginx/dh.pem
+#
+# -- ssl protocols.
+ALL_SSL_PROTOCOLS=TLSv1\.2\ TLSv1\.1\ TLSv1
+#
+## -- ssl ciphers.
+#### -- Default Security Start. --
+ALL_SSL_CIPHERS=HIGH:!aNULL:!MD5
+#### -- Default Security End. --
+#
+#### -- CRYPTREC/IPA Guide High Security / Not Safari Start.--
+#ALL_SSL_CIPHERS=ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256
+#### -- CRYPTREC/IPA Guide High Security / Not Safari End. --
+#
+#### -- CRYPTREC/IPA Guide Normal Security Start. --
+#ALL_SSL_CIPHERS=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-CAMELLIA128-SHA:DHE-RSA-AES128-SHA:AES128-GCM-SHA256:AES128-SHA256:CAMELLIA128-SHA:AES128-SHA:ECDH-ECDSA-AES128-GCM-SHA256:ECDH-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-SHA256:DHE-RSA-CAMELLIA256-SHA:DHE-RSA-AES256-SHA:AES256-GCM-SHA384:AES256-SHA256:CAMELLIA256-SHA:AES256-SHA:ECDH-ECDSA-AES256-GCM-SHA384:ECDH-RSA-AES256-GCM-SHA384
+#### -- CRYPTREC/IPA Guide Normal Security End. --
+#
+#### -- Mozilla Intermediate Compatibility Profile High Security Start. --
+#ALL_SSL_CIPHERS=ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK
+#### -- Mozilla Intermediate Compatibility Profile High Security End. --
+#
+#### -- Mozilla Intermediate Compatibility Profile Middle Security Start. --
+#ALL_SSL_CIPHERS=ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA
+## Mozilla Intermediate Compatibility Profile Middle Security End. --
+
+###############################################################################
+## 2-3. WebServer Setup Config.
+###############################################################################
+# -- Web Server User and Group.
+WEB_SERVER_SYSTEM_USER_GROUP=nginx
+#
+# -- Apache Config Directory.
+APACHE_BASE_CONFIG_DIRECTORY=/etc/httpd/conf
+APACHE_MOD_CONFIG_DIRECTORY=/etc/httpd/conf.modules.d
+APACHE_CONFIG_DIRECTORY=/etc/httpd/conf.d
+#
+# -- Apache Web Directory.
+APACHE_LOG_DIRECTORY=/var/www/logs
+APACHE_FILE_DIRECTORY=/var/www/html
+APACHE_ERROR_DIRECTORY=/var/www/error
+#
+# -- mod extract forwarded for Apache2.4
+APACHE_MOD_EXTRACT_FORWARDED=git://github.com/matsumoto-r/mod_extract_forwarded_for_2.4
+#
+###############################################################################
+## 2-4. LAMP and LNMP / PHP.init Setup Config.
+###############################################################################
+# -- PHP.ini Edit.
+# -- Memory Limit.
+PHP_MEM_LIMIT=256M
+# -- Post Max File Size.
+PHP_POST_MAX=128M
+# -- Upload Max File Size.
+PHP_UPLOAD_MAX=64M
+# -- PHP Expose.
+PHP_EXPOSE=Off
+# -- Date Time Zone 
+PHP_DATE_TIMEZONE=Asia/Tokyo
+# -- session.cookie_secure for SSL
+PHP_SESSION_COOKIE=On
+# -- session.cookie_domain
+PHP_SESSION_COOKIE_DOMAIN=${SETUP_WEBSERVER_HOSTNAME}
+#
+###############################################################################
+## 2-5. LNMP / GeoIP Setup Config.
+###############################################################################
+# -- GeoIP Path.
+GEOIP_PATH=/usr/share/GeoIP
+GEOIP_FILE=GeoIP.dat
+GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
+#
+###############################################################################
+## 2-6. LNMP / Nginx Setup Config.
+###############################################################################
+# -- UPSTREAM KEEPALIVE
+NGINX_KEEPALIVE_TIMEOUT=5
+NGINX_KEEPALIVE_UPSTREAM=10
+#
+# -- SSL or Normal
+NGINX_SCHEMA=https://
+#
+# -- SSL MOD SETUP
+NGINX_V2_MOD=http2
+NGINX_SPDY_MOD=spdy
+#
+# -- Nginx Config Directory.
+NGINX_BASE_DIRECTORY=/etc/nginx
+NGINX_CONFIG_DIRECTORY=/etc/nginx/conf.d
+#
+# -- Nginx Default Setting.
+NGINX_INDEX_FILE_LIST=index\.php\ index\.html\ index\.htm
+NGINX_DEFAULT_CHARSET=utf-8
+#
+# -- Nginx Proxy Cache.
+NGINX_PROXY_CACHE_PATH=/var/www/cache
+NGINX_PROXY_CACHE_TEMP=/var/www/tmp
+#
+# -- Nginx Header Setup.
+NGINX_HEADER_X_FRAME_OPT=DENY
+NGINX_HEADER_X_CONTENT_TYPE_OPT=nosniff
+NGINX_HEADER_X_XSS_PROTECT=1\; mode=block
+NGINX_HEADER_CONTENT_SP=default-src \'self\'
+#
+# -- Nginx Client Buffer Setup.
+NGINX_CLIENT_BODY=8k
+NGINX_CLIENT_HEAD=1k
+NGINX_CLIENT_MAXBODY=1m
+NGINX_LARGE_CLIENT_NUM=4
+NGINX_LARGE_CLIENT_HEAD=8k
+#
+# -- Nginx Upstream.
+NGINX_BACKEND_NAME=backend
+#NGINX_BACKEND_NAME=${SETUP_WEBSERVER_HOSTNAME}
+#
+# -- Nginx Backend URI
+#NGINX_BACKEND_DIRECTORY=admin\|installations
+NGINX_BACKEND_DIRECTORY=wp-admin\|wp-login\.php
+#
+# -- Nginx Referers URI
+NGINX_REFERERS_URI=*\.google\.com *\.facebook\.com *\.twitter\.com
+#
+# -- Nginx Deny File and Dir.
+NGINX_DENY_ALL_DIR=ht\|git\|svn
+#
+# -- Nginx Cache File Setting.
+NGINX_LOCATION_ASCII_FILE=txt\|xml\|html\?\|js\|css\|gz
+NGINX_LOCATION_BINARY_FILE=ico\|jpe\?g\|gif\|png\|wmv\|flv\|mpg
+#
+# -- Nginx Location Logging.
+NGINX_LOCATION_LOG=off
+NGINX_EXPIRES_DAY=7d
+NGINX_LOG_NOT_FOUND=off
+#
+###############################################################################
+## 2-7. MariaDB Setup Config.
+###############################################################################
+# -- MariaDB Edit.
+DB_STORAGE_ENGINE=InnoDB
+#
+# -- Database root Passwd.
+DB_ROOT_PASSWD=
+#
+# -- Database User Passwd.
+DB_USER_PASSWD=
+#
+# -- CREATE DB Name.
+CREATE_DB_NAME=
+#
+# -- Database User Name.
+DB_USER_NAME=
+#
+###############################################################################
+## 3. OPTION - WordPress Install. -
+###############################################################################
+# -- Install Host
+WP_SCHEMA=${NGINX_SCHEMA}
+# -- WordPress Version
+WP_VERSION=4.4
+# -- WordPress Download URL
+WP_DL_URL=https://ja.wordpress.org/
+# -- WordPress Download File Name
+WP_DL_FILE=latest-ja.zip
+# -- WordPress Config Install Directory
+WP_CONF_DIR=manager
+# -- DB unix Socket
+#WP_DB_UNIX_PATH=localhost
+WP_DB_UNIX_PATH=localhost:/var/lib/mysql/mysql.sock
+# -- WP DB PREFIX
+WP_DB_PREFIX=wp_
+###############################################################################

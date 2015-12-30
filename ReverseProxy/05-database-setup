@@ -1,0 +1,66 @@
+#!/bin/bash
+#### lnmp-70 v0.0.1
+############################################################################
+source ./initfile
+############################################################################
+#### Database Setup.
+echo "Database Setup."
+mysql -u root -p${DB_ROOT_PASSWD} -e "CREATE DATABASE ${CREATE_DB_NAME} DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;"
+mysql -u root -p${DB_ROOT_PASSWD} -e "GRANT ALL PRIVILEGES ON ${CREATE_DB_NAME}.* TO ${DB_USER_NAME}@localhost IDENTIFIED BY \"${DB_USER_PASSWD}\";"
+mysql -u root -p${DB_ROOT_PASSWD} -e "DELETE FROM mysql.user WHERE User='root' AND host IN ('127.0.0.1', '::1');"
+mysql -u root -p${DB_ROOT_PASSWD} -e "FLUSH PRIVILEGES;"
+mysql -u root -p${DB_ROOT_PASSWD}
+####
+clear
+############################################################################
+echo -e "CMS Install for WordPress [y] \n"
+read SELECTCMSINSTALL
+if [ ${SELECTCMSINSTALL} = "y" ] ; then
+clear
+echo "WordPress-$WP_VERSION install start."
+## Install File Download.
+cd ${APACHE_FILE_DIRECTORY}
+curl -O ${WP_DL_URL}/${WP_DL_FILE}
+unzip ${APACHE_FILE_DIRECTORY}/${WP_DL_FILE}
+rm -f ${APACHE_FILE_DIRECTORY}/${WP_DL_FILE}
+mkdir ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}
+mv ${APACHE_FILE_DIRECTORY}/wordpress/* ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/
+rm -fr ${APACHE_FILE_DIRECTORY}/wordpress
+cd ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/
+mv ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config-sample.php ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+cp ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/index.php ${APACHE_FILE_DIRECTORY}/index.php
+vim ${APACHE_FILE_DIRECTORY}/index.php
+## -- wp-config.php Edit.
+sed -i "s|database_name_here|${CREATE_DB_NAME}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+sed -i "s|username_here|${DB_USER_NAME}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+sed -i "s|password_here|${DB_USER_PASSWD}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+sed -i "s|localhost|${WP_DB_UNIX_PATH}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+sed -i "s|wp_|${WP_DB_PREFIX}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+vim ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} ${APACHE_FILE_DIRECTORY}/*
+chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/*
+#####################################
+echo "WordPress-$WP_VERSION install end."
+clear
+/usr/sbin/nginx -t
+#####################################
+echo "Webサーバを再起動しますか？ [y/n]"
+read WP_WEBSERVER_RESTART
+#####################################
+if [ ${WP_WEBSERVER_RESTART} = "y" ]; then
+systemctl restart php-fpm
+systemctl restart nginx
+systemctl restart mariadb
+fi
+#####################################
+clear
+echo "WordPress-$WP_VERSION のインストールに関する事前準備は完了しました。"
+echo "ブラウザを起動して引き続きインストール作業を行ってください。"
+echo "その後 last_optimization を実行し、ファイルのチェックを行ってください。"
+#### Adminer Install.
+#https://www.adminer.org/static/download/4.2.3/adminer-4.2.3.php
+# Adminer Pluginでも可。
+############################################################
+fi
+############################################################
+chmod +x ${INSTALL_PATH}/last_optimization
