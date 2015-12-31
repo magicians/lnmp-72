@@ -13,7 +13,6 @@ rpm -ivh http://dl.fedoraproject.org/pub/epel/7/SRPMS/n/nginx-1.6.3-7.el7.src.rp
 cd ~/rpm/SOURCES
 ## Nginx Source Downloads.
 curl -O http://nginx.org/download/nginx-1.9.9.tar.gz
-tar zxvf ~/rpm/SOURCES/nginx-1.9.9.tar.gz
 ## Nginx BuildFile Edit.
 ## Nginx Version Edit.
 sed -i "s|1.6.3|1.9.9|g" ~/rpm/SPECS/nginx.spec
@@ -24,12 +23,6 @@ read ngxhttpv2mod
 if [ ${ngxhttpv2mod} = "y" ] ; then
 sed -i "s|--with-http_spdy_module|--with-http_v2_module|g" ~/rpm/SPECS/nginx.spec
 fi
-## Error Pages Server Version Delete.
-sed -i 's|^static char ngx_http_server_full_string\[\] = "Server: " NGINX_VER CRLF;$|/* & */|g' ~/rpm/SOURCES/nginx-1.9.9/src/http/ngx_http_header_filter_module.c
-sed -i '50a\static char ngx_http_server_full_string[] = "Server: Nginx Server "CRLF;' ~/rpm/SOURCES/nginx-1.9.9/src/http/ngx_http_header_filter_module.c
-vim ~/rpm/SOURCES/nginx-1.9.9/src/http/ngx_http_header_filter_module.c
-tar zcvf ~/rpm/SOURCES/nginx-1.9.9.tar.gz ~/rpm/SOURCES/nginx-1.9.9
-rm -fr ~/rpm/SOURCES/nginx-1.9.9
 #
 ## nginx.spec Edit View.
 vim ~/rpm/SPECS/nginx.spec

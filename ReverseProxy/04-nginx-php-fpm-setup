@@ -42,6 +42,8 @@ sed -i "s|^post_max_size = 8M|post_max_size = ${PHP_POST_MAX}|g" /etc/php.ini
 sed -i "s|^upload_max_filesize = 2M|upload_max_filesize = ${PHP_UPLOAD_MAX}|g" /etc/php.ini
 sed -i "s|^expose_php = On|expose_php = ${PHP_EXPOSE}|g" /etc/php.ini
 sed -i "s|^;date.timezone =|date.timezone = \"${PHP_DATE_TIMEZONE}\"|g" /etc/php.ini
+sed -i "s|^;session.cookie_secure =|session.cookie_secure = \"${PHP_SESSION_COOKIE}\"|g" /etc/php.ini
+sed -i "s|^session.cookie_domain =|dsession.cookie_domain = \"${PHP_SESSION_COOKIE_DOMAIN}\"|g" /etc/php.ini
 vim /etc/php.ini
 ####
 clear
@@ -325,11 +327,12 @@ cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/04-httpv2.conf
     http2_recv_buffer_size 256k;
 EOF
 vim ${NGINX_CONFIG_DIRECTORY}/04-httpv2.conf
-clear
 # DH PARAM
-openssl dhparam -out ${FRONT_SSL_DH}
-chown nginx ${FRONT_SSL_DH}
-chmod 700 ${FRONT_SSL_DH}
+# echo "DH PARAM"
+# openssl dhparam -out ${FRONT_SSL_DH}
+# chown nginx ${FRONT_SSL_DH}
+# chmod 700 ${FRONT_SSL_DH}
+clear
 ####
 echo "Nginx http/v2 Setup"
 cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
