@@ -206,8 +206,8 @@ NGINX_PROXY_CACHE_TEMP=/var/www/tmp
 # -- Nginx Header Setup.
 NGINX_HEADER_X_FRAME_OPT=DENY
 NGINX_HEADER_X_CONTENT_TYPE_OPT=nosniff
-NGINX_HEADER_X_XSS_PROTECT=1\; mode=block
-NGINX_HEADER_CONTENT_SP=default-src \'self\'
+NGINX_HEADER_X_XSS_PROTECT=1\;\ mode=block
+NGINX_HEADER_CONTENT_SP=default-src\ \'self\'
 #
 # -- Nginx Client Buffer Setup.
 NGINX_CLIENT_BODY=8k
@@ -225,7 +225,7 @@ NGINX_BACKEND_NAME=backend
 NGINX_BACKEND_DIRECTORY=wp-admin\|wp-login\.php
 #
 # -- Nginx Referers URI
-NGINX_REFERERS_URI=*\.google\.com *\.facebook\.com *\.twitter\.com
+NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com
 #
 # -- Nginx Deny File and Dir.
 NGINX_DENY_ALL_DIR=ht\|git\|svn
