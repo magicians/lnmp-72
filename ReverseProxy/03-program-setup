@@ -208,6 +208,7 @@ chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/*.txt
 EOF
 #
 chmod +x /etc/cron.weekly/clamscan
+vim /etc/cron.weekly/clamscan
 ## clamd startup
 systemctl enable clamd
 systemctl start clamd
