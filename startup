@@ -2,7 +2,8 @@
 #### lnmp-70 v0.0.1
 source ./initfile
 ####
-chmod 400 ${INSTALL_PATH}/initfile
+chmod 600 ${INSTALL_PATH}/initfile
+chmod 600 ${INSTALL_PATH}/build
 chmod 400 ${INSTALL_PATH}/last_optimization
 ##############################################
 #echo -e "LAMP(Linux, Apache, MariaDB, PHP)でインストールしますか？ [y] \n"
