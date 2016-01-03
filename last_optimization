@@ -19,6 +19,7 @@ chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/check.sh
 rm -f ${INSTALL_PATH}/*.sh
 rm -f ${INSTALL_PATH}/startup
 rm -f ${INSTALL_PATH}/initfile
+rm -f ${INSTALL_PATH}/build
 rm -fr ${INSTALL_PATH}/.git*
 ####
 sh /etc/cron.weekly/clamscan

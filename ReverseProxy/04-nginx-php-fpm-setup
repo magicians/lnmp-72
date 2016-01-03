@@ -43,7 +43,7 @@ sed -i "s|^upload_max_filesize = 2M|upload_max_filesize = ${PHP_UPLOAD_MAX}|g" /
 sed -i "s|^expose_php = On|expose_php = ${PHP_EXPOSE}|g" /etc/php.ini
 sed -i "s|^;date.timezone =|date.timezone = \"${PHP_DATE_TIMEZONE}\"|g" /etc/php.ini
 sed -i "s|^;session.cookie_secure =|session.cookie_secure = \"${PHP_SESSION_COOKIE}\"|g" /etc/php.ini
-sed -i "s|^session.cookie_domain =|dsession.cookie_domain = \"${PHP_SESSION_COOKIE_DOMAIN}\"|g" /etc/php.ini
+sed -i "s|^session.cookie_domain =|session.cookie_domain = \"${PHP_SESSION_COOKIE_DOMAIN}\"|g" /etc/php.ini
 vim /etc/php.ini
 ####
 clear
