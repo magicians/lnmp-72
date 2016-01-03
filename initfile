@@ -105,7 +105,10 @@ FRONT_SSL_KEY=/etc/pki/tls/private/localhost.pem
 FRONT_SSLCA_CERT=/etc/pki/tls/cert/ca.crt
 #
 # -- SSL DH Param Path.
-FRONT_SSL_DH=/etc/nginx/dh.pem
+FRONT_SSL_DH=/etc/nginx/dhparam.pem
+#
+# -- SSL DH Param.
+FRONT_SSL_BIT=2048
 #
 # -- ssl protocols.
 ALL_SSL_PROTOCOLS=TLSv1\.2\ TLSv1\.1\ TLSv1
