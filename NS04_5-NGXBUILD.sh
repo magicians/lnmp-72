@@ -40,3 +40,8 @@ sudo nginx -V 2>&1 | grep SNI
 # TLS SNI support enabled
 # http2 / v2_module
 # http://nginx.org/en/docs/http/ngx_http_v2_module.html
+# DH PARAM
+echo "DH PARAM"
+echo "sudo openssl dhparam -out ${FRONT_SSL_DH}"
+echo "sudo chown nginx ${FRONT_SSL_DH}"
+echo "sudo chmod 700 ${FRONT_SSL_DH}"

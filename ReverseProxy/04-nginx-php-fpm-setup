@@ -327,11 +327,6 @@ cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/04-httpv2.conf
     http2_recv_buffer_size 256k;
 EOF
 vim ${NGINX_CONFIG_DIRECTORY}/04-httpv2.conf
-# DH PARAM
-# echo "DH PARAM"
-# openssl dhparam -out ${FRONT_SSL_DH}
-# chown nginx ${FRONT_SSL_DH}
-# chmod 700 ${FRONT_SSL_DH}
 clear
 ####
 echo "Nginx http/v2 Setup"
