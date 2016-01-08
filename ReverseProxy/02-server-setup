@@ -8,19 +8,41 @@ echo -e "シェルを通している場合は [n] \n"
 read optserverinst01
 if [ ${optserverinst01} = "y" ] ; then
 # CentOS7 httpd normal install.
-yum -y install pcre-devel zlib-devel openssl-devel libxslt-devel GeoIP-devel gd-devel perl-ExtUtils-Embed gperftools-devel httpd-devel httpd mod_ssl
+yum -y install pcre-devel \
+zlib-devel \
+openssl-devel \
+libxslt-devel \
+GeoIP-devel \
+gd-devel \
+perl-ExtUtils-Embed \
+gperftools-devel \
+httpd-devel \
+httpd \
+mod_ssl
 clear
 echo "ここで一度、別のターミナルを立ち上げてください。"
 echo "ユーザ権限でSSHログインし NS04_5-NGXBUILD.sh を実行して Nginx をビルドして下さい。"
 echo -e " \n"
 #### PHP Install.
 echo -e "PHP7.0 をインストールします。\n"
-yum --enablerepo=remi --enablerepo=remi-php70 install php php-cli php-devel php-mbstring php-gd php-pear php-xml php-pecl-apc php-mcrypt php-mysqli mariadb mariadb-server php-fpm
+yum --enablerepo=remi --enablerepo=remi-php70 install php \
+php-cli \
+php-devel \
+php-mbstring \
+php-gd \
+php-pear \
+php-xml \
+php-pecl-apc \
+php-mcrypt \
+php-mysqli \
+mariadb \
+mariadb-server \
+php-fpm
 ####
 fi
 clear
 echo -e "PHP-FPMをセットアップします。\n"
-cp /etc/php-fpm.d/www.conf /etc/php-fpm.d/www_conf
+cp /etc/php-fpm.d/www.conf /etc/php-fpm.d/www_conf.origin
 vim /etc/php-fpm.d/www.conf
 echo -e "PHP-FPM Edit. \n"
 sed -i 's|^listen = 127.0.0.1:9000|listen = /var/run/php-fpm/www.sock|g' /etc/php-fpm.d/www.conf
@@ -42,8 +64,8 @@ sed -i "s|^post_max_size = 8M|post_max_size = ${PHP_POST_MAX}|g" /etc/php.ini
 sed -i "s|^upload_max_filesize = 2M|upload_max_filesize = ${PHP_UPLOAD_MAX}|g" /etc/php.ini
 sed -i "s|^expose_php = On|expose_php = ${PHP_EXPOSE}|g" /etc/php.ini
 sed -i "s|^;date.timezone =|date.timezone = \"${PHP_DATE_TIMEZONE}\"|g" /etc/php.ini
-sed -i "s|^;session.cookie_secure =|session.cookie_secure = \"${PHP_SESSION_COOKIE}\"|g" /etc/php.ini
-sed -i "s|^session.cookie_domain =|session.cookie_domain = \"${PHP_SESSION_COOKIE_DOMAIN}\"|g" /etc/php.ini
+sed -i "s|^;session.cookie_secure =|session.cookie_secure = ${PHP_SESSION_COOKIE}|g" /etc/php.ini
+sed -i "s|^session.cookie_domain =|;\0|g" /etc/php.ini
 vim /etc/php.ini
 ####
 clear
@@ -188,8 +210,8 @@ gunzip ${GEOIP_FILE}.gz
 cd
 # Apache Nginx restart
 systemctl restart mariadb
-#systemctl restart httpd
-systemctl restart php-fpm
+systemctl restart httpd
+#systemctl restart php-fpm
 systemctl restart nginx
 EOF
 vim /etc/cron.weekly/GeoIP
@@ -466,7 +488,7 @@ server {
             set \$do_not_cache   1;
         }
         if (\$http_cookie ~* "comment_author_|wordpress_(?!test_cookie)|wp-postpass_" ) {
-            set $do_not_cache   1;
+            set \$do_not_cache   1;
         }
         # REVERSE PROXY SETUP
         proxy_no_cache           \$do_not_cache;
@@ -493,10 +515,9 @@ server {
 
     location ~ /uploads/ {
         valid_referers    ${NGINX_REFERERS_URI};
-        if (\$invalid_referers) {
+        if (\$invalid_referer) {
             return 403;
         }
-        aio threads;
     }
 
     # redirect server error pages to the static page /403.html
@@ -521,8 +542,8 @@ server {
     }
 
     # WordPress no Admin for HTTP
-    if ($uri !~ '/wp-(admin|includes|cron\.php|comments|login\.php|content|author)') {
-        rewrite ^(.*)?$ https://$host last;
+    if (\$uri !~ '/wp-(admin|includes|cron\.php|comments|login\.php|content|author)') {
+        rewrite ^(.*)?$ https://\$host last;
         break;
     }
 
@@ -667,7 +688,7 @@ server {
             set \$do_not_cache   1;
         }
         if (\$http_cookie ~* "comment_author_|wordpress_(?!test_cookie)|wp-postpass_" ) {
-            set $do_not_cache   1;
+            set \$do_not_cache   1;
         }
         # REVERSE PROXY SETUP
         proxy_no_cache           \$do_not_cache;
@@ -714,8 +735,8 @@ server {
     }
 
     # WordPress no Admin for HTTP
-    if ($uri !~ '/wp-(admin|includes|cron\.php|comments|login\.php|content|author)') {
-        rewrite ^(.*)?$ https://$host last;
+    if (\$uri !~ '/wp-(admin|includes|cron\.php|comments|login\.php|content|author)') {
+        rewrite ^(.*)?$ https://\$host last;
         break;
     }
 
@@ -815,12 +836,12 @@ echo -e "MariaDB conf Edit."
 echo "default-storage-engine=${DB_STORAGE_ENGINE}" >> /etc/my.cnf
 vim /etc/my.cnf
 ####
-#systemctl enable httpd
-systemctl enable php-fpm
+systemctl enable httpd
+#systemctl enable php-fpm
 systemctl enable nginx
 systemctl enable mariadb
-#systemctl start httpd
-systemctl start php-fpm
+systemctl start httpd
+#systemctl start php-fpm
 systemctl start nginx
 systemctl start mariadb
 ####

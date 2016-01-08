@@ -3,7 +3,7 @@
 source ./initfile
 ####
 chmod 600 ${INSTALL_PATH}/initfile
-chmod 600 ${INSTALL_PATH}/build
+chmod 600 ${INSTALL_PATH}/nginx-build
 chmod 400 ${INSTALL_PATH}/last_optimization
 ##############################################
 #echo -e "LAMP(Linux, Apache, MariaDB, PHP)でインストールしますか？ [y] \n"
@@ -14,11 +14,9 @@ if [ ${instaltolamp} = "y" ] ; then
 ### LAMP Mode Install Start.
 ### Nginx+Apache Mode Install Start.
 ##############################################
-ln -s ${INSTALL_PATH}/ReverseProxy/01-network-setup ${INSTALL_PATH}/NA01-NET.sh
-ln -s ${INSTALL_PATH}/ReverseProxy/02-repository-setup ${INSTALL_PATH}/NA02-REPO.sh
-ln -s ${INSTALL_PATH}/ReverseProxy/03-program-setup ${INSTALL_PATH}/NA03-SOFT.sh
-ln -s ${INSTALL_PATH}/ReverseProxy/04-nginx-php-fpm-setup ${INSTALL_PATH}/NA04-WEBSV.sh
-ln -s ${INSTALL_PATH}/ReverseProxy/05-database-setup ${INSTALL_PATH}/NA05-DB.sh
-chmod -R +x ${INSTALL_PATH}/{NA01-NET.sh,NA02-REPO.sh,NA03-SOFT.sh,NA04-WEBSV.sh,NS04_5-NGXBUILD.sh,NA05-DB.sh}
+ln -s ${INSTALL_PATH}/ReverseProxy/01-default-setup ${INSTALL_PATH}/NA01-DEF.sh
+ln -s ${INSTALL_PATH}/ReverseProxy/02-server-setup ${INSTALL_PATH}/NA02-WEB.sh
+ln -s ${INSTALL_PATH}/ReverseProxy/03-cms-setup ${INSTALL_PATH}/NA03-CMS.sh
+chmod -R +x ${INSTALL_PATH}/{NA01-DEF.sh,NA02-WEB.sh,NA03-CMS.sh,NGXBUILD.sh}
 ##############################################
 fi

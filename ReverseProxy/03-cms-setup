@@ -48,7 +48,8 @@ echo "Webサーバを再起動しますか？ [y/n]"
 read WP_WEBSERVER_RESTART
 #####################################
 if [ ${WP_WEBSERVER_RESTART} = "y" ]; then
-systemctl restart php-fpm
+systemctl restart httpd
+#systemctl restart php-fpm
 systemctl restart nginx
 systemctl restart mariadb
 fi

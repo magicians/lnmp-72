@@ -16,11 +16,8 @@ vim /home/${USER_NAME}/check.sh
 chmod +x /home/${USER_NAME}/check.sh
 chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/check.sh
 ####
-rm -f ${INSTALL_PATH}/*.sh
-rm -f ${INSTALL_PATH}/startup
-rm -f ${INSTALL_PATH}/initfile
-rm -f ${INSTALL_PATH}/build
-rm -fr ${INSTALL_PATH}/.git*
+rm -f ${INSTALL_PATH}/{*.sh,startup,initfile,nginx-build}
+rm -fr ${INSTALL_PATH}/{ReverseProxy,.git*}
 ####
 sh /etc/cron.weekly/clamscan
 sh /etc/cron.daily/tripwire.sh

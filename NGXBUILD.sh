@@ -1,6 +1,6 @@
 #!/bin/bash
 # == lnmp-70 v0.0.1 ==
-source build
+source nginx-build
 ## Nginx Build on User Directory.
 echo "Start Nginx Build"
 mkdir -p ~/rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}/

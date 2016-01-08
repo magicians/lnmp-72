@@ -1,0 +1,675 @@
+#!/bin/sh
+#### lnmp-70 v0.0.1
+############################################################################
+source ./initfile
+############################################################################
+# totem on Malware Infection. / uninstall.
+yum remove -y totem
+#
+echo -e "ローカルセットアップを開始します。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install01
+if [ ${opt_install01} = "y" ] ; then
+#### 接続先を固定する、他からの接続は原則拒否推奨。
+echo "hosts.allow のインストール先はローカルですか？ [y/n]"
+read localhosts
+if [ ${localhosts} = "y" ] ; then
+# ローカル環境での設定
+	echo "sshd: ${LOCAL_IP_HOSTS}" >> /etc/hosts.allow
+else
+	echo "接続は固定IPですか？ [y/n]"
+	read DefIpHosts
+	if [ ${DefIpHosts} = "y" ] ; then
+# 固定IPによる接続
+		echo "sshd: ${GLOBAL_IP_ADDR}" >> /etc/hosts.allow
+	else
+# DHCP・プロバイダホストによる接続
+		echo "sshd: ${GLOBAL_ACCESS_HOSTS}" >> /etc/hosts.allow
+	fi
+fi
+echo "ALL: ALL" >> /etc/hosts.deny
+fi
+#
+############################################################################
+#### アクセス権限をユーザに付与。
+############################################################################
+#
+echo -e "アクセス権限をユーザに付与します[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install02
+if [ ${opt_install02} = "y" ] ; then
+sed -i "s|^#auth\t\trequired|auth\t\trequired|" /etc/pam.d/su
+#
+vi /etc/pam.d/su
+visudo
+fi
+#
+############################################################################
+#### SSHの初期設定。
+############################################################################
+#
+echo -e "SSHの初期設定を開始します。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install03
+if [ ${opt_install03} = "y" ] ; then
+## SSH ポート変更
+sed -i "s|^#Port 22$|Port $SSH_EDIT_PORT|" /etc/ssh/sshd_config
+## SSH rootでのログインを不可にする
+sed -i "s|^#PermitRootLogin yes|PermitRootLogin no|" /etc/ssh/sshd_config
+## SSH 公開鍵での接続を有効化する
+sed -i "s|^#PubkeyAuthentication yes|PubkeyAuthentication yes|" /etc/ssh/sshd_config
+## SSH パスワードによるログインを不可にする
+sed -i "s|^PasswordAuthentication yes|PasswordAuthentication no|" /etc/ssh/sshd_config
+## SSH でログインするユーザを指定する
+echo "AllowUsers ${USER_NAME}" >> /etc/ssh/sshd_config
+## sshd_config の確認・及び間違いがあれば変更する
+vi /etc/ssh/sshd_config
+## sshd_config のテスト
+sshd -t
+fi
+#
+############################################################################
+#### iptablesセットアップ・シェルスクリプトを作成。
+############################################################################
+#
+echo -e "iptables-servicesのインストール [y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install04
+if [ ${opt_install04} = "y" ] ; then
+yum -y install iptables-services
+systemctl stop firewalld
+systemctl disable firewalld
+systemctl start iptables
+systemctl enable iptables
+fi
+# iptablesセットアップ
+echo -e "iptablesセットアップ [y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install05
+if [ ${opt_install05} = "y" ] ; then
+# iptables setup.
+echo -e "iptables setup.\n"
+cat <<EOF > /home/${USER_NAME}/.iptables_setup
+#!/bin/bash
+
+#COMMIT File
+IPTABLES_CONF_TMP=\`mktemp\`
+
+#iptablesの停止
+systemctl stop iptables
+
+#COMMIT Start
+echo "*filter" >> \$IPTABLES_CONF_TMP
+#デフォルトルール
+
+echo ":INPUT DROP [0:0]" >> \$IPTABLES_CONF_TMP
+echo ":FORWARD DROP [0:0]" >> \$IPTABLES_CONF_TMP
+echo ":OUTPUT ACCEPT [0:0]" >> \$IPTABLES_CONF_TMP
+
+#ループバック
+echo "-A OUTPUT -o lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -i lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#Ping エコー応答・要求のみ 許可
+echo "-A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#パケットチェック
+echo "-A INPUT -p 50 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p 51 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#マルチキャストDNS
+echo "-A INPUT -d 224.0.0.251/32 -p udp -m udp --dport 5353 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#接続済みのセッションを接続許可
+echo "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#接続時のSSHポート及びサーバポートの設定
+#SSH
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport ${SSH_EDIT_PORT} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#HTTP
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#HTTPS
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#メールサーバのポート設定
+#SMTP
+#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 25 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#POP
+#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 110 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#IMAP
+#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 143 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#LOCAL IP Addr ACCEPT, プライベートネットワークを構築している場合のみ変更する
+echo "-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d ${LOCAL_IP_ADDR} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#外部からのSNMP通信(UDP:161)をFWで破棄
+echo "-A INPUT -p udp -m udp --dport 161 -j DROP" >> \$IPTABLES_CONF_TMP
+
+#セキュアセットアップ・ステルススキャンの破棄
+echo "-A INPUT -p tcp -m state --state NEW -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -j DROP" >> \$IPTABLES_CONF_TMP
+
+#セキュアセットアップ・フラグメントパケットによる攻撃の破棄
+echo "-A INPUT -f -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,PSH,URG -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,PSH,ACK,URG -j DROP" >> \$IPTABLES_CONF_TMP
+
+#TCP Null ポートスキャンの対策
+echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m tcp --tcp-flags SYN,RST SYN,RST -j DROP" >> \$IPTABLES_CONF_TMP
+
+#TCP Xmas ポートスキャンの対策
+echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN FIN,SYN -j DROP" >> \$IPTABLES_CONF_TMP
+
+#TCP FINポートスキャンの対策
+echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,ACK FIN -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,ACK,URG -j DROP" >> \$IPTABLES_CONF_TMP
+
+#ブロードキャスト・パケットの破棄
+echo "-A INPUT -m pkttype --pkt-type broadcast -j DROP" >> \$IPTABLES_CONF_TMP
+
+#マルチキャスト・パケットの破棄
+echo "-A INPUT -m pkttype --pkt-type multicast -j DROP" >> \$IPTABLES_CONF_TMP
+
+#無効ヘッダがあるTCPパケットを破棄
+echo "-A INPUT -m state --state INVALID -j DROP" >> \$IPTABLES_CONF_TMP
+
+#セキュアセットアップ・プライベートアドレスからの接続を破棄
+echo "-A INPUT -s 127.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 127.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 192.168.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 192.168.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 192.0.2.0/24 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 192.0.2.0/24 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 172.16.0.0/12 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 172.16.0.0/12 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 10.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 10.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 169.254.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 169.254.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 168.254.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 168.254.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 224.0.0.0/4 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 224.0.0.0/4 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 240.0.0.0/4 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 240.0.0.0/4 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 240.0.0.0/5 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 240.0.0.0/5 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s 248.0.0.0/5 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 248.0.0.0/5 -j DROP" >> \$IPTABLES_CONF_TMP
+
+#セキュアセットアップ・ブロードキャストからの接続を破棄
+echo "-A INPUT -d 0.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 255.255.255.255/32 -j DROP" >> \$IPTABLES_CONF_TMP
+
+#セキュアセットアップ・Ping攻撃の破棄
+echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-upto 1/sec --hashlimit-burst 5 --hashlimit-mode srcip --hashlimit-name input_icmp --hashlimit-htable-expire 300000 -j DROP" >> \$IPTABLES_CONF_TMP
+
+##セキュアセットアップ・Ping及び113ポートからの接続を拒否
+echo "-A INPUT -p tcp -m tcp --dport 113 -j REJECT --reject-with tcp-reset" >> \$IPTABLES_CONF_TMP
+
+#ICMPからの接続を拒否
+echo "-A INPUT -j REJECT --reject-with icmp-host-prohibited" >> \$IPTABLES_CONF_TMP
+
+#Logging
+echo "-A INPUT -m limit --limit 5/m --limit-burst 7 -j LOG --log-prefix \" DEFAULT DROP \" " >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -j DROP" >> \$IPTABLES_CONF_TMP
+
+#COMMIT End
+echo "COMMIT" >> \$IPTABLES_CONF_TMP
+
+#iptablesの保存
+cat \$IPTABLES_CONF_TMP > /etc/sysconfig/iptables
+
+#iptablesの起動
+systemctl start iptables
+iptables -L
+EOF
+vi /home/${USER_NAME}/.iptables_setup
+sed -i "s/^-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT$/#\0/g" /etc/sysconfig/ip6tables
+vi /etc/sysconfig/ip6tables
+#
+############################################################################
+#### ユーザディレクトリにiptablesセットアップ・シェルスクリプトを保存。
+############################################################################
+#
+echo "セットアップ先はグローバル環境ですか？ [y/n]"
+read globaliptable
+if [ ${globaliptable} = "y" ] ; then
+	# グローバル環境では使わない。※ ローカル環境専用
+	sed -i "s|echo \"-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPTABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.iptables_setup
+	sed -i "s|echo \"-A INPUT -d ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPTABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.iptables_setup
+fi
+vi /home/${USER_NAME}/.iptables_setup
+## ユーザディレクトリに保存したセットアップ・シェルスクリプトのアクセス権を変更。
+chmod 400 /home/${USER_NAME}/.iptables_setup
+sh /home/${USER_NAME}/.iptables_setup
+chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/.iptables_setup
+chmod 701 /home/${USER_NAME}
+fi
+#
+############################################################################
+## iptablesの確認とip6tables-IPv6の無効化
+systemctl restart sshd
+ss -lt
+#
+############################################################################
+## SELINUXの変更。SakuraVPSでは既に disabled されているのでデフォルトで n を選択して下さい。
+echo -e "SELINUXの変更を開始します。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install06
+if [ ${opt_install06} = "y" ] ; then
+getenforce
+echo "インストール先でSELINUXは有効化されてましたか？ [y/n] : さくらのVPSなら='n'"
+read selinuxenforcing
+if [ ${selinuxenforcing} = "y" ] ; then
+	setenforce 0
+	getenforce
+echo "SELINUXを完全に無効化しますか？ [y/n]"
+read selinuxdisabled
+if [ ${selinuxdisabled} = "y" ] ; then
+	sed -i 's|^SELINUX=enforcing$|SELINUX=disabled|g' /etc/selinux/config
+else
+	sed -i 's|^SELINUX=enforcing$|SELINUX=permissive|g' /etc/selinux/config
+fi
+	vi /etc/selinux/config
+	vi /etc/sysconfig/selinux
+	yum install selinux-policy-targeted selinux-policy-devel
+	# SSH Port
+	semanage port -l | grep ssh
+	semanage port -a -t ssh_port_t -p tcp ${SSH_EDIT_PORT}
+	semanage port -l | grep ssh
+	# HTTP Port
+	semanage port -l | grep http
+	semanage port -a -t http_cache_port_t -p tcp ${REVERSE_PROXY_PORT}
+	semanage port -l | grep http
+fi
+#
+fi
+############################################################################
+#### リポジトリの追加。
+############################################################################
+#
+echo -e "CentOS7専用のリポジトリを追加します。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install07
+if [ ${opt_install07} = "y" ] ; then
+## Rpmforge Repository
+echo -e "CentOS7専用のリポジトリを追加します。"
+rpm --import ${RepoRPMForgeGPG}
+rpm -ivh ${RepoRPMForgex86}
+#
+## Epel Repository
+rpm --import ${RepoEpelGPG}
+rpm -ivh ${RepoEPELx86}
+#
+## Elrepo Repository
+rpm --import ${RepoElrepoGPG}
+rpm -ivh ${RepoElrepox86}
+#
+## Remi Repository
+rpm --import ${RepoRemiGPG}
+rpm -ivh ${RepoRemix86}
+#
+############################################################################
+#
+vi /etc/yum.repos.d/rpmforge.repo
+## clamd-0.98.4 and clamav-0.98.7 / Conflict.
+sed -i "8a\exclude=clam*" /etc/yum.repos.d/epel.repo
+vi /etc/yum.repos.d/epel.repo
+vi /etc/yum.repos.d/elrepo.repo
+vi /etc/yum.repos.d/remi.repo
+#
+## 各リリースのアップデート
+yum -y update rpmforge-release epel-release elrepo-release remi-release
+#
+fi
+############################################################################
+#### yumアップデート、グループインストール、yum-cronのインストール。
+############################################################################
+#
+echo -e "yumアップデート、グループインストール、yum-cronのインストールを開始します。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install08
+if [ ${opt_install08} = "y" ] ; then
+yum -y update
+yum -y install git mercurial etckeeper
+touch /etc/.gitignore
+echo "shadow*" >> /etc/.gitignore
+echo "gshadow*" >> /etc/.gitignore
+echo "passwd*" >> /etc/.gitignore
+echo "group*" >> /etc/.gitignore
+yum -y groupinstall "Base" "Development tools" "Japanese Support"
+#
+## yum-cron install
+yum -y install yum-cron
+systemctl enable yum-cron
+systemctl start yum-cron
+# etckeeper init
+etckeeper init
+etckeeper commit "VPS Installed First Commit."
+#
+fi
+############################################################################
+#### portsentry install. - Portスキャンをされた場合、拒否するソフトウェアを追加。
+############################################################################
+#
+echo -e "portsentryのインストールを開始します。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install09
+if [ ${opt_install09} = "y" ] ; then
+wget http://ftp.riken.go.jp/Linux/freshrpms/redhat/9/portsentry/portsentry-1.1-fr8.src.rpm
+rpmbuild --rebuild portsentry-1.1-fr8.src.rpm
+rm -f portsentry-1.1-fr8.src.rpm
+rpm -ivh /root/rpmbuild/RPMS/*/portsentry*.rpm
+rm -f /root/rpmbuild/RPMS/*/portsentry*.rpm
+rm -fr /root/rpmbuild
+#
+############################################################################
+#### KILL_HOSTS_DENY. - 設定ファイルを編集。
+############################################################################
+#
+sed -i 's|^#KILL_HOSTS_DENY="ALL: $TARGET$ : DENY"$|KILL_HOSTS_DENY="ALL: $TARGET$ : DENY"|g' /etc/portsentry/portsentry.conf
+vi /etc/portsentry/portsentry.conf
+#
+############################################################################
+#### portsentry WhiteList Edit. - ホワイトリストに自身の接続するIPAddrを追加する。
+############################################################################
+#
+echo "Portsentry WhiteList のインストール先はローカルですか？ [y/n]"
+read porthosts
+if [ ${porthosts} = "y" ] ; then
+	# ローカル接続での接続IPを書き込む
+	echo "${LOCAL_IP_ADDR}" >> /etc/portsentry/portsentry.ignore
+else
+	echo "接続先は固定IPですか？ [y/n]"
+	read globalstaticip
+
+	if [ ${globalstaticip} = "y" ] ; then
+		# グローバル接続での固定IPを書き込む
+		echo "${GLOBAL_IP_ADDR}" >> /etc/portsentry/portsentry.ignore
+	else
+		echo "IPアドレス以外でのホワイトリストの設定されません。"
+	fi
+fi
+vi /etc/portsentry/portsentry.ignore
+#
+/sbin/chkconfig portsentry on
+fi
+############################################################################
+#### denyhosts install. Denyhosts の追加。
+############################################################################
+#
+echo -e "denyhostsのインストールを開始します。\n"
+yum -y install denyhosts
+#
+############################################################################
+#
+systemctl enable denyhosts
+systemctl start denyhosts
+#
+############################################################################
+#### Password Expect Install. 後に設定するパスワードを生成。事前にDLしておく。
+############################################################################
+echo -e "expectのインストールを開始します。\n"
+yum -y install expect
+############################################################################
+############################################################################
+#### ユーザディレクトリにスキャンログを保存する。
+############################################################################
+#
+echo -e "ユーザディレクトリにスキャンログディレクトリを作成。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install10
+if [ ${opt_install10} = "y" ] ; then
+mkdir -p /home/${USER_NAME}/logs/clamscan
+chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/*
+chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs
+fi
+#
+############################################################################
+#### 管理者用メールを設定する。ログ管理ソフトウェアも追加。
+############################################################################
+#
+echo -e "管理者用メールを設定する。ログ管理ソフトウェアも追加。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install11
+if [ ${opt_install11} = "y" ] ; then
+sed -i '/^root:/d' /etc/aliases
+echo "root:     ${ALIASES_ROOT_MAIL_ADDR}" >> /etc/aliases
+vi /etc/aliases
+newaliases
+echo test | mail root
+yum -y install logwatch
+fi
+#
+############################################################################
+#### rkhunter install. 先に入れた物より比較的更新頻度が高いチェッカーを追加する。
+############################################################################
+#
+echo -e "rkhunterのインストール。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install12
+if [ ${opt_install12} = "y" ] ; then
+yum -y install rkhunter
+rkhunter --update
+sed -i "s|^#ALLOW_SSH_ROOT_USER=no$|ALLOW_SSH_ROOT_USER=no|g" /etc/rkhunter.conf
+sed -i "s|^ALLOW_SSH_ROOT_USER=unset$|#ALLOW_SSH_ROOT_USER=unset|g" /etc/rkhunter.conf
+vi /etc/rkhunter.conf
+# passwd / group permission 604
+chmod 604 /etc/{passwd,passwd-,group,group-}
+ls -la /etc | grep passwd*
+ls -la /etc | grep group*
+clear
+rkhunter --propupd
+rkhunter --check --skip-keypress --report-warnings-only --no-mail-on-warning
+#
+fi
+#
+############################################################################
+#### tripwire install. 改竄チェック
+############################################################################
+#
+echo -e "tripwireのインストール。[y] \n"
+echo -e "既に一回このシェルを通している場合/必要無い場合 [n] \n"
+####
+read opt_trip_install
+if [ ${opt_trip_install} = "y" ] ; then
+yum -y install tripwire
+tripwire-setup-keyfiles
+sed -i 's/^LOOSEDIRECTORYCHECKING\s\+=false$/LOOSEDIRECTORYCHECKING =true/' /etc/tripwire/twcfg.txt
+twadmin -m F -c /etc/tripwire/tw.cfg -S /etc/tripwire/site.key /etc/tripwire/twcfg.txt
+#
+cat <<EOF > /etc/tripwire/twpolmake.pl
+#!/usr/bin/perl
+# Tripwire Policy File customize tool
+# ----------------------------------------------------------------
+# Copyright (C) 2003 Hiroaki Izumi
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# ----------------------------------------------------------------
+# Usage:
+#    perl twpolmake.pl {Pol file}
+# ----------------------------------------------------------------
+#
+\$POLFILE=\$ARGV[0];
+
+open(POL,"\$POLFILE") or die "open error: \$POLFILE" ;
+my(\$myhost,\$thost) ;
+my(\$sharp,\$tpath,\$cond) ;
+my(\$INRULE) = 0 ;
+
+while (<POL>) {
+    chomp;
+    if ((\$thost) = /^HOSTNAME\s*=\s*(.*)\s*;/) {
+        \$myhost = \`hostname\` ; chomp(\$myhost) ;
+        if (\$thost ne \$myhost) {
+            \$_="HOSTNAME=\"\$myhost\";" ;
+        }
+    }
+    elsif ( /^{/ ) {
+        \$INRULE=1 ;
+    }
+    elsif ( /^}/ ) {
+        \$INRULE=0 ;
+    }
+    elsif (\$INRULE == 1 and (\$sharp,\$tpath,\$cond) = /^(\s*\#?\s*)(\/\S+)\b(\s+->\s+.+)\$/) {
+        \$ret = (\$sharp =~ s/\#//g) ;
+        if (\$tpath eq '/sbin/e2fsadm' ) {
+            \$cond =~ s/;\s+(tune2fs.*)\$/; \#\$1/ ;
+        }
+        if (! -s \$tpath) {
+            \$_ = "\$sharp#\$tpath\$cond" if (\$ret == 0) ;
+        }
+        else {
+            \$_ = "\$sharp\$tpath\$cond" ;
+        }
+    }
+    print "\$_\n" ;
+}
+close(POL) ;
+EOF
+#
+## 先に生成していたパスワードを数回にわけて打ち込む。※コピペでも可。
+#
+vim /etc/tripwire/twpolmake.pl
+perl /etc/tripwire/twpolmake.pl /etc/tripwire/twpol.txt > /etc/tripwire/twpol.txt.new
+twadmin -m P -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol -S /etc/tripwire/site.key /etc/tripwire/twpol.txt.new
+#
+## orgin txt file
+# twadmin -m p -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol -S /etc/tripwire/site.key > /etc/tripwire/twpol.txt
+#
+rm -f /etc/tripwire/twcfg.txt*
+rm -f /etc/tripwire/twpol.txt*
+tripwire -m i -s -c /etc/tripwire/tw.cfg
+tripwire --init
+tripwire --check
+#
+## update file check
+# ls -al /var/lib/tripwire/report/
+# tripwire -m u -r /var/lib/tripwire/report/xxxxxx.twr
+#
+## crontab set tripwire.sh Cronで定期的にチェックさせる
+cat <<EOF > /etc/cron.daily/tripwire.sh
+#!/bin/bash
+
+PATH=/usr/sbin:/usr/bin:/bin:/usr/local/tripwire/sbin
+
+# パスフレーズ設定
+SITEPASS=${INITSITEPASS}  # サイトパスフレーズ
+LOCALPASS=${INITLOCALPASS} # ローカルパスフレーズ
+
+cd /etc/tripwire
+
+# Tripwireチェック実行
+tripwire -m c -s -c tw.cfg|mail -s "Tripwire(R) Integrity Check Report in `hostname`" root
+
+# ポリシーファイル最新化
+twadmin -m p -c tw.cfg -p tw.pol -S site.key > twpol.txt
+perl twpolmake.pl twpol.txt > twpol.txt.new
+twadmin -m P -c tw.cfg -p tw.pol -S site.key -Q \$SITEPASS twpol.txt.new > /dev/null
+rm -f twpol.txt* *.bak
+
+# データベース最新化
+rm -f /usr/local/tripwire/lib/tripwire/*.twd*
+tripwire -m i -s -c tw.cfg -P \$LOCALPASS
+EOF
+## /home/${UserName}/tw/*.txt
+vim /etc/cron.daily/tripwire.sh
+chmod 700 /etc/cron.daily/tripwire.sh
+####
+fi
+#
+############################################################################
+#### clamd install. VirusScanを追加。
+############################################################################
+#
+echo -e "clamdのインストール。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install13
+if [ ${opt_install13} = "y" ] ; then
+yum -y install clamd
+sed -i "s|^TCPSocket 3310$|#\0|" /etc/clamd.conf
+sed -i "s|^TCPAddr 127.0.0.1$|#\0|" /etc/clamd.conf
+sed -i "s|^#ExcludePath \^/proc/$|ExcludePath \^/proc/|" /etc/clamd.conf
+sed -i "s|^#ExcludePath \^/sys/$|ExcludePath \^/sys/|" /etc/clamd.conf
+sed -i "s|^DetectBrokenExecutables yes$|#\0|" /etc/clamd.conf
+sed -i "s|^User clamav$|#\0|" /etc/clamd.conf
+vi /etc/clamd.conf
+sed -i "s|^DatabaseOwner clamav$|DatabaseOwner root|" /etc/freshclam.conf
+vi /etc/freshclam.conf
+#
+## clamd cron setup
+cat <<EOF > /etc/cron.weekly/clamscan
+#!/bin/bash
+yum -y update clamd > /dev/null 2>&1
+/usr/bin/freshclam > /dev/null
+/usr/bin/clamscan -i -r --remove /home >> /home/${USER_NAME}/logs/clamscan/clamscan.txt 2>&1
+cd /home/${USER_NAME}/logs/clamscan
+mv clamscan.txt clamscan."\$(date +%Y%m%d-%I%M%S).txt"
+chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/*.txt
+EOF
+#
+chmod +x /etc/cron.weekly/clamscan
+vim /etc/cron.weekly/clamscan
+## clamd startup
+systemctl enable clamd
+systemctl start clamd
+freshclam
+clamscan --infected --remove --recursive
+#
+# clamd.pid Create.
+echo -e "clamd.pid Create.\n"
+echo "d /var/run/clamav 0755 root root -" >> /etc/tmpfiles.d/clamd.conf
+vi /etc/tmpfiles.d/clamd.conf
+systemd-tmpfiles --create clamd.conf
+systemctl daemon-reload
+systemctl restart clamd
+systemctl status clamd
+#
+fi
+## ntp.conf Edit
+systemctl stop ntpd
+systemctl disable ntpd
+#echo "disable monitor" >> /etc/ntp.conf
+#vi /etc/ntp.conf
+#
+## sysctl Edit IPv6の無効化及び、PostfixをIPv4のみ設定にする。
+#
+echo -e "sysctlのセットアップ。[y] \n"
+echo -e "既に一回このシェルを通している場合は [n] \n"
+read opt_install14
+if [ ${opt_install14} = "y" ] ; then
+echo "net.ipv4.icmp_echo_ignore_broadcasts = 1" >> /etc/sysctl.conf
+echo "net.ipv4.icmp_echo_ignore_all = 1" >> /etc/sysctl.conf
+echo "net.ipv4.icmp_ignore_bogus_error_responses = 1" >> /etc/sysctl.conf
+echo "net.ipv4.tcp_syncookies = 1" >> /etc/sysctl.conf
+echo "net.ipv4.tcp_rfc1337 = 1" >> /etc/sysctl.conf
+echo "net.ipv4.tcp_tw_recycle = 1" >> /etc/sysctl.conf
+echo "net.ipv4.tcp_fin_timeout = 15" >> /etc/sysctl.conf
+vi /etc/sysctl.conf
+sysctl -p
+sed -i 's|^inet_protocols = all$|inet_protocols = ipv4|' /etc/postfix/main.cf
+vi /etc/postfix/main.cf
+#
+fi
+## 再起動
+echo "再起動しますか？ [y/n] \n"
+read opt_install15
+if [ ${opt_install15} = "y" ] ; then
+reboot
+fi
+#
+############################################################################
+## 最低限のセットアップは以上です。以降、必要があればWebサーバを追加してください。
+############################################################################
