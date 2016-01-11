@@ -1,83 +1,5 @@
 # == lnmp-70 v0.0.1 ==
 ###############################################################################
-# -- 1. Path Environment Variable.
-###############################################################################
-# -- Setup UserName. --
-USER_NAME=username
-#
-# -- Install Shell Script Path.
-INSTALL_PATH=/home/${USER_NAME}/install
-#
-###############################################################################
-# -- 1-2. Base Environment Variable. --
-###############################################################################
-# -- Domain Name. --
-SETUP_WEBSERVER_HOSTNAME=localhost
-#
-# -- Local Access IP. / Local Access Network Only. --
-LOCAL_IP_ADDR=192.168.1.0/24
-#
-# -- Global Access IP. or Static IP. --
-GLOBAL_IP_ADDR=
-#
-# -- Server Static IP. --
-SERVER_STATIC_IP_ADDR=
-#
-# -- SSH Access Network Hosts. / Local Access Network Only. --
-LOCAL_IP_HOSTS=192.168.1.
-#
-# -- Global IP. / Provider Host. --
-GLOBAL_ACCESS_HOSTS=
-#
-###############################################################################
-# -- 1-3. iptables-services.
-###############################################################################
-# -- ssh Default Port Number.
-SSH_EDIT_PORT=22
-#
-# -- reverse proxy backend port Number.
-REVERSE_PROXY_PORT=8080
-#
-###############################################################################
-## 1-4-1. Repository Keys.
-###############################################################################
-# -- rpmforge GPG Key.
-RepoRPMForgeGPG=http://apt.sw.be/RPM-GPG-KEY.dag.txt
-# -- eple GPG Key.
-RepoEpelGPG=http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
-# -- elrepo GPG Key.
-RepoElrepoGPG=http://elrepo.org/RPM-GPG-KEY-elrepo.org
-# -- remi GPG key.
-RepoRemiGPG=http://rpms.famillecollet.com/RPM-GPG-KEY-remi
-#
-###############################################################################
-## 1-4-2. Repository.
-###############################################################################
-# -- rpmforge.repo
-RepoRPMForgex86=http://apt.sw.be/redhat/el7/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el7.rf.x86_64.rpm
-# -- epel.repo
-RepoEPELx86=http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
-# -- elrepo.repo
-RepoElrepox86=http://elrepo.org/linux/elrepo/el7/x86_64/RPMS/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
-# -- remi.repo
-RepoRemix86=http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
-#
-###############################################################################
-## 1-5. aliases mail address.
-###############################################################################
-# -- logwatch mail.
-ALIASES_ROOT_MAIL_ADDR=info@localhost
-#
-###############################################################################
-## 1-6. tripwire pass.
-###############################################################################
-# -- Tripwire Site Password.
-INITSITEPASS=
-#
-# -- Tripwire Local Password.
-INITLOCALPASS=
-#
-###############################################################################
 ## 2.WebServer Environment Variable.
 ###############################################################################
 ## -- 2-1. HostName Setup Config.
@@ -169,8 +91,6 @@ PHP_EXPOSE=Off
 PHP_DATE_TIMEZONE=Asia/Tokyo
 # -- session.cookie_secure for SSL
 PHP_SESSION_COOKIE=On
-# -- session.cookie_domain
-PHP_SESSION_COOKIE_DOMAIN=${SETUP_WEBSERVER_HOSTNAME}
 #
 ###############################################################################
 ## 2-5. LNMP / GeoIP Setup Config.
@@ -242,40 +162,4 @@ NGINX_LOCATION_LOG=off
 NGINX_EXPIRES_DAY=7d
 NGINX_LOG_NOT_FOUND=off
 #
-###############################################################################
-## 2-7. MariaDB Setup Config.
-###############################################################################
-# -- MariaDB Edit.
-DB_STORAGE_ENGINE=InnoDB
-#
-# -- Database root Passwd.
-DB_ROOT_PASSWD=
-#
-# -- Database User Passwd.
-DB_USER_PASSWD=
-#
-# -- CREATE DB Name.
-CREATE_DB_NAME=
-#
-# -- Database User Name.
-DB_USER_NAME=
-#
-###############################################################################
-## 3. OPTION - WordPress Install. -
-###############################################################################
-# -- Install Host
-WP_SCHEMA=${NGINX_SCHEMA}
-# -- WordPress Version
-WP_VERSION=4.4
-# -- WordPress Download URL
-WP_DL_URL=https://ja.wordpress.org/
-# -- WordPress Download File Name
-WP_DL_FILE=latest-ja.zip
-# -- WordPress Config Install Directory
-WP_CONF_DIR=manager
-# -- DB unix Socket
-#WP_DB_UNIX_PATH=localhost
-WP_DB_UNIX_PATH=localhost:/var/lib/mysql/mysql.sock
-# -- WP DB PREFIX
-WP_DB_PREFIX=wp_
 ###############################################################################

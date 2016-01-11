@@ -1,7 +1,10 @@
 #!/bin/bash
 #### lnmp-70 v0.0.1
 ############################################################################
-source ./initfile
+source ./initfile.txt
+source ./default.txt
+source ./server.txt
+source ./cms.txt
 ############################################################################
 #### Database Setup.
 echo "Database Setup."

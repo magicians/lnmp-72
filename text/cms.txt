@@ -1,0 +1,38 @@
+# == lnmp-70 v0.0.1 ==
+###############################################################################
+## 2-7. MariaDB Setup Config.
+###############################################################################
+# -- MariaDB Edit.
+DB_STORAGE_ENGINE=InnoDB
+#
+# -- Database root Passwd.
+DB_ROOT_PASSWD=
+#
+# -- Database User Passwd.
+DB_USER_PASSWD=
+#
+# -- CREATE DB Name.
+CREATE_DB_NAME=
+#
+# -- Database User Name.
+DB_USER_NAME=
+#
+###############################################################################
+## 3. OPTION - WordPress Install. -
+###############################################################################
+# -- Install Host
+WP_SCHEMA=${NGINX_SCHEMA}
+# -- WordPress Version
+WP_VERSION=4.4
+# -- WordPress Download URL
+WP_DL_URL=https://ja.wordpress.org/
+# -- WordPress Download File Name
+WP_DL_FILE=latest-ja.zip
+# -- WordPress Config Install Directory
+WP_CONF_DIR=manager
+# -- DB unix Socket
+#WP_DB_UNIX_PATH=localhost
+WP_DB_UNIX_PATH=localhost:/var/lib/mysql/mysql.sock
+# -- WP DB PREFIX
+WP_DB_PREFIX=wp_
+###############################################################################

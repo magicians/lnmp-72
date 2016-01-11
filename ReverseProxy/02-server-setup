@@ -1,7 +1,9 @@
 #!/bin/bash
 #### lnmp-70 v0.0.1
 ############################################################################
-source ./initfile
+source ./initfile.txt
+source ./default.txt
+source ./server.txt
 ############################################################################
 echo -e "WebServer(Nginx)をインストールします。[y] \n"
 echo -e "シェルを通している場合は [n] \n"

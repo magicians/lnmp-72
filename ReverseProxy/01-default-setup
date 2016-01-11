@@ -1,7 +1,8 @@
 #!/bin/sh
 #### lnmp-70 v0.0.1
 ############################################################################
-source ./initfile
+source ./initfile.txt
+source ./default.txt
 ############################################################################
 # totem on Malware Infection. / uninstall.
 yum remove -y totem

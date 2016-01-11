@@ -1,9 +1,13 @@
 #!/bin/bash
 #### lnmp-70 v0.0.1
-source ./initfile
+source ./initfile.txt
 ####
-chmod 600 ${INSTALL_PATH}/initfile
-chmod 600 ${INSTALL_PATH}/nginx-build
+chmod 600 ${INSTALL_PATH}/initfile.txt
+chmod 600 ${INSTALL_PATH}/text/*.txt
+ln -s ${INSTALL_PATH}/text/default.txt ${INSTALL_PATH}/default.txt
+ln -s ${INSTALL_PATH}/text/server.txt ${INSTALL_PATH}/server.txt
+ln -s ${INSTALL_PATH}/text/cms.txt ${INSTALL_PATH}/cms.txt
+ln -s ${INSTALL_PATH}/text/nginx-build.txt ${INSTALL_PATH}/nginx-build.txt
 chmod 400 ${INSTALL_PATH}/last_optimization
 ##############################################
 #echo -e "LAMP(Linux, Apache, MariaDB, PHP)でインストールしますか？ [y] \n"
