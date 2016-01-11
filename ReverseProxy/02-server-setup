@@ -212,9 +212,8 @@ wget ${GEOIP_URL}/${GEOIP_FILE}.gz
 gunzip ${GEOIP_FILE}.gz
 cd
 # Apache Nginx restart
-systemctl restart mariadb
-systemctl restart httpd
-#systemctl restart php-fpm
+#systemctl restart httpd
+systemctl restart php-fpm
 systemctl restart nginx
 EOF
 vim /etc/cron.weekly/GeoIP
@@ -866,12 +865,12 @@ echo -e "MariaDB conf Edit."
 echo "default-storage-engine=${DB_STORAGE_ENGINE}" >> /etc/my.cnf
 vim /etc/my.cnf
 ####
-systemctl enable httpd
-#systemctl enable php-fpm
+#systemctl enable httpd
+systemctl enable php-fpm
 systemctl enable nginx
 systemctl enable mariadb
-systemctl start httpd
-#systemctl start php-fpm
+#systemctl start httpd
+systemctl start php-fpm
 systemctl start nginx
 systemctl start mariadb
 ####
