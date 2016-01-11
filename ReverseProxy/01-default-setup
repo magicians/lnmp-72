@@ -282,9 +282,9 @@ fi
 	semanage port -a -t ssh_port_t -p tcp ${SSH_EDIT_PORT}
 	semanage port -l | grep ssh
 	# HTTP Port
-	semanage port -l | grep http
-	semanage port -a -t http_cache_port_t -p tcp ${REVERSE_PROXY_PORT}
-	semanage port -l | grep http
+	#semanage port -l | grep http
+	#semanage port -a -t http_cache_port_t -p tcp ${REVERSE_PROXY_PORT}
+	#semanage port -l | grep http
 fi
 #
 fi

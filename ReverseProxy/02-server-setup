@@ -214,7 +214,6 @@ wget ${GEOIP_URL}/${GEOIP_FILE}.gz
 gunzip ${GEOIP_FILE}.gz
 cd
 # Apache Nginx restart
-#systemctl restart httpd
 systemctl restart php-fpm
 systemctl restart nginx
 EOF
@@ -235,6 +234,7 @@ sed -i "s|^error_log /var/log/nginx/error.log|error_log ${APACHE_LOG_DIRECTORY}/
 sed -i "s|access_log  /var/log/nginx/access.log  main|access_log  ${APACHE_LOG_DIRECTORY}/nginx_access.log  main|g" /etc/nginx/nginx.conf
 sed -i "s|keepalive_timeout   65|keepalive_timeout   ${NGINX_KEEPALIVE_TIMEOUT}|g" /etc/nginx/nginx.conf
 sed -i "20a\    server_tokens       off;" /etc/nginx/nginx.conf
+sed -i "35a\    index ${NGINX_INDEX_FILE_LIST};" /etc/nginx/nginx.conf
 vim /etc/nginx/nginx.conf
 # Default GZIP Setting.
 cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/00-gzip.conf
@@ -292,7 +292,8 @@ cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
     #default upstream setup.
     upstream ${CONFIG_HOST_DOMAIN}.${NGINX_BACKEND_NAME} {
             ip_hash;
-            server      ${BACKEND_SERVER_PORT};
+            #server      ${BACKEND_SERVER_PORT};
+            server      unix:/var/run/php-fpm/www.sock;
             keepalive   ${NGINX_KEEPALIVE_UPSTREAM};
     }
 EOF
@@ -361,66 +362,6 @@ chmod 700 ${FRONT_SSL_DH}
 clear
 ####
 echo "Nginx http/v2 Setup"
-cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-bk.conf
-server {
-    listen      ${BACKEND_LISTEN_PORT} ssl ${NGINX_V2_MOD};
-    server_name ${CONFIG_HOST_DOMAIN};
-
-    ssl on;
-    ssl_certificate      ${FRONT_SSL_CERT};
-    ssl_certificate_key  ${FRONT_SSL_KEY};
-    ssl_dhparam ${FRONT_SSL_DH};
-    ssl_stapling         on;
-    ssl_stapling_verify  on;
-    ssl_trusted_certificate ${FRONT_SSLCA_CERT};
-    resolver             127.0.0.1;
-
-    ssl_session_timeout 5m;
-
-    ssl_protocols ${ALL_SSL_PROTOCOLS};
-    ssl_ciphers ${ALL_SSL_CIPHERS};
-    ssl_prefer_server_ciphers on;
-
-    #### https://kjur.github.io/jsrsasign/tool_httpscfg.html
-    # Public-Key-Pinningを有効にするにはコメントアウトを外してください
-    #add_header Public-Key-Pins '; max-age=5184000; includeSubDomains';
-
-    http2_max_concurrent_streams 128;
-    http2_recv_timeout 30s;
-    http2_idle_timeout 3m;
-    http2_chunk_size 8k;
-
-    root   ${APACHE_FILE_DIRECTORY};
-    index  ${NGINX_INDEX_FILE_LIST};
-    charset ${NGINX_DEFAULT_CHARSET};
-
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_bkend.log;
-
-    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
-
-    # SSL Redirect Setup
-    #   
-    location /(wp-admin/.*|wp-includes/.*|wp-comments/.*|wp-content/.*|wp-login\.php|wp-cron\.php) {
-        index index.php index.html index.htm;
-        # static files
-        if (-f \$request_filename) {
-            access_log  off;
-            break;
-        }
-        # request to index.php
-        if (!-e \$request_filename) {
-            rewrite ^(.+)$ /index.php?q=\$1 last;
-        }
-    }
-
-    # php-fpm Setup
-    #
-    include php_fpmd;
-
-}
-EOF
-vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-bk.conf
-#
 cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
 server {
     listen      443 ssl ${NGINX_V2_MOD};
@@ -452,7 +393,6 @@ server {
     http2_chunk_size 8k;
 
     root   ${APACHE_FILE_DIRECTORY};
-    index  ${NGINX_INDEX_FILE_LIST};
     charset ${NGINX_DEFAULT_CHARSET};
 
     access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_ssl.log;
@@ -473,8 +413,30 @@ server {
         break;
     }
 
+    # php-fpm Setup
+    #
+    include php_fpmd;
+
+    # Permalink Setup
+    #   
+    location ~ / {
+        # static files
+        if (-f \$request_filename) {
+            access_log  off;
+            break;
+        }
+        # request to index.php
+        if (!-e \$request_filename) {
+            rewrite ^(.+)$ /index.php?q=\$1 last;
+        }
+    }
+
     # Proxy Setup
     location / {
+        # WordPress Default Setup
+        #
+        try_files \$uri \$uri/ /index.php?\$args;
+
         # HTTP Method Deny
         #
         if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
@@ -559,7 +521,7 @@ server {
     }
 
     # WordPress no Admin for HTTP
-    if (\$uri !~ '/author') {
+    if (\$uri ~ '/author') {
         rewrite ^(.*)?$ https://\$host last;
         break;
     }
@@ -578,64 +540,6 @@ vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
 #
 else
 echo "Nginx Spdy Setup"
-cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-bk.conf
-server {
-    listen      ${BACKEND_LISTEN_PORT} ssl ${NGINX_SPDY_MOD};
-    server_name ${CONFIG_HOST_DOMAIN};
-
-    ssl on;
-    ssl_certificate      ${FRONT_SSL_CERT};
-    ssl_certificate_key  ${FRONT_SSL_KEY};
-    ssl_dhparam ${FRONT_SSL_DH};
-    ssl_stapling         on;
-    ssl_stapling_verify  on;
-    ssl_trusted_certificate ${FRONT_SSLCA_CERT};
-    resolver             127.0.0.1;
-
-    ssl_session_timeout 5m;
-
-    ssl_protocols ${ALL_SSL_PROTOCOLS};
-    ssl_ciphers ${ALL_SSL_CIPHERS};
-    ssl_prefer_server_ciphers on;
-
-    #### https://kjur.github.io/jsrsasign/tool_httpscfg.html
-    # Public-Key-Pinningを有効にするにはコメントアウトを外してください
-    #add_header Public-Key-Pins '; max-age=5184000; includeSubDomains';
-
-    spdy_chunk_size             8k;
-    spdy_headers_comp           9;
-
-    root   ${APACHE_FILE_DIRECTORY};
-    index  ${NGINX_INDEX_FILE_LIST};
-    charset ${NGINX_DEFAULT_CHARSET};
-
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_bkend.log;
-
-    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
-
-    # SSL Redirect Setup
-    #   
-    location /(wp-admin/.*|wp-includes/.*|wp-comments/.*|wp-content/.*|wp-login\.php|wp-cron\.php) {
-        index index.php index.html index.htm;
-        # static files
-        if (-f \$request_filename) {
-            access_log  off;
-            break;
-        }
-        # request to index.php
-        if (!-e \$request_filename) {
-            rewrite ^(.+)$ /index.php?q=\$1 last;
-        }
-    }
-
-    # php-fpm Setup
-    #
-    include php_fpmd;
-
-}
-EOF
-vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-bk.conf
-#
 cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
 server {
     listen      443 ssl ${NGINX_SPDY_MOD};
@@ -665,7 +569,6 @@ server {
     spdy_headers_comp           9;
 
     root   ${APACHE_FILE_DIRECTORY};
-    index  ${NGINX_INDEX_FILE_LIST};
     charset ${NGINX_DEFAULT_CHARSET};
 
     access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_ssl.log;
@@ -688,6 +591,9 @@ server {
 
     # Proxy Setup
     location / {
+        # WordPress Default Setup
+        #
+        try_files $uri $uri/ /index.php?$args;
         # HTTP Method Deny
         #
         if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
@@ -765,7 +671,7 @@ server {
     }
 
     # WordPress no Admin for HTTP
-    if (\$uri !~ '/author') {
+    if (\$uri ~ '/author') {
         rewrite ^(.*)?$ https://\$host last;
         break;
     }
@@ -796,7 +702,6 @@ server {
     server_name ${CONFIG_HOST_DOMAIN};
 
     root   ${APACHE_FILE_DIRECTORY};
-    index  ${NGINX_INDEX_FILE_LIST};
     charset ${NGINX_DEFAULT_CHARSET};
 
     access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_rewrite.log;
@@ -856,7 +761,7 @@ cat <<EOF > /etc/logrotate.d/webserver
     sharedscripts
     delaycompress
     postrotate
-        /bin/systemctl reload httpd.service > /dev/null 2>/dev/null || true
+        /bin/systemctl reload php-fpm.service > /dev/null 2>/dev/null || true
         /bin/kill -USR1 `cat /run/nginx.pid 2>/dev/null` 2>/dev/null || true
     endscript
 }
@@ -867,11 +772,9 @@ echo -e "MariaDB conf Edit."
 echo "default-storage-engine=${DB_STORAGE_ENGINE}" >> /etc/my.cnf
 vim /etc/my.cnf
 ####
-#systemctl enable httpd
 systemctl enable php-fpm
 systemctl enable nginx
 systemctl enable mariadb
-#systemctl start httpd
 systemctl start php-fpm
 systemctl start nginx
 systemctl start mariadb
