@@ -180,6 +180,9 @@ cat <<EOF > ${APACHE_CONFIG_DIRECTORY}/${CONFIG_HOST_DOMAIN}.conf
   ServerAdmin info@localhost
   ErrorLog ${APACHE_LOG_DIRECTORY}/httpd_${CONFIG_HOST_DOMAIN}_proxy_error_log
   TransferLog ${APACHE_LOG_DIRECTORY}/httpd_${CONFIG_HOST_DOMAIN}_proxy_access_log
+  #<FilesMatch \.php$>
+  #    SetHandler "proxy:unix:/var/run/php-fpm/php-fpm.sock|fcgi://localhost"
+  #</FilesMatch>
 </VirtualHost>
 EOF
 #
@@ -315,12 +318,12 @@ vim /etc/nginx/conf.d/06-buffer.conf
 ####
 clear
 echo "Nginx PHP-FPM Setup. \n"
-cat <<EOF > /etc/nginx/php_ssl
+cat <<EOF > /etc/nginx/php_fpmd
 # PHP-FPM SSL Setting.
 #
     location ~ \.php\$ {
         ## baserCMS
-        #try_files           \$uri =404;
+        try_files           \$uri =404;
         include             /etc/nginx/fastcgi_params;
         fastcgi_pass        unix:/var/run/php-fpm/www.sock;
         fastcgi_index       index.php;
@@ -331,7 +334,7 @@ cat <<EOF > /etc/nginx/php_ssl
     }
 EOF
 #
-vim /etc/nginx/php_ssl
+vim /etc/nginx/php_fpmd
 #
 ######################################################################
 # SSL Setting Start.
@@ -357,7 +360,7 @@ chmod 700 ${FRONT_SSL_DH}
 clear
 ####
 echo "Nginx http/v2 Setup"
-cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
+cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-bk.conf
 server {
     listen      ${BACKEND_LISTEN_PORT} ssl ${NGINX_V2_MOD};
     server_name ${CONFIG_HOST_DOMAIN};
@@ -411,10 +414,13 @@ server {
 
     # php-fpm Setup
     #
-    include php_ssl;
+    include php_fpmd;
 
 }
-
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-bk.conf
+#
+cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
 server {
     listen      443 ssl ${NGINX_V2_MOD};
     server_name ${CONFIG_HOST_DOMAIN};
@@ -469,11 +475,16 @@ server {
     # Proxy Setup
     location / {
         # HTTP Method Deny
+        #
         if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
             return 444;
         }
         # Cache Control
+        #
         add_header Cache-Control "public, max-age=43200";
+
+        # Cache Setup
+        #
         set \$do_not_cache       0;
         if (\$request_method != "GET") {
             set \$do_not_cache    1;
@@ -481,19 +492,24 @@ server {
         if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY})') {
             set \$do_not_cache   1;
         }
-        if (\$http_user_agent ~* '(DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter)') {
-            set \$do_not_cache   1;
-        }
-        if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
-            set \$do_not_cache   1;
-        }
         if (\$http_cookie ~* "comment_author_|wordpress_(?!test_cookie)|wp-postpass_" ) {
             set \$do_not_cache   1;
         }
+        # Mobile UA Setup
+        #
+        set \$mobile "";
+        if (\$http_user_agent ~* '(DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter)') {
+            set \$mobile ".kt";
+        }
+        if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
+            set \$mobile ".sp";
+        }
+
         # REVERSE PROXY SETUP
+        #
         proxy_no_cache           \$do_not_cache;
         proxy_cache_bypass       \$do_not_cache;
-        proxy_cache_key          "\$scheme://\$host\$request_uri";
+        proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
         proxy_cache              cache_${CONFIG_HOST_DOMAIN};
         proxy_pass               ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
     }
@@ -542,7 +558,7 @@ server {
     }
 
     # WordPress no Admin for HTTP
-    if (\$uri !~ '/wp-(admin|includes|cron\.php|comments|login\.php|content|author)') {
+    if (\$uri !~ '/author') {
         rewrite ^(.*)?$ https://\$host last;
         break;
     }
@@ -552,6 +568,7 @@ server {
     location ~ /(wp-config\.php|wp-mail\.php|install\.php|xmlrpc\.php) {
         allow   127.0.0.1;
         allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
         deny    all;
     }
 }
@@ -560,7 +577,7 @@ vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
 #
 else
 echo "Nginx Spdy Setup"
-cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
+cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-bk.conf
 server {
     listen      ${BACKEND_LISTEN_PORT} ssl ${NGINX_SPDY_MOD};
     server_name ${CONFIG_HOST_DOMAIN};
@@ -612,10 +629,13 @@ server {
 
     # php-fpm Setup
     #
-    include php_ssl;
+    include php_fpmd;
 
 }
-
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-bk.conf
+#
+cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
 server {
     listen      443 ssl ${NGINX_SPDY_MOD};
     server_name ${CONFIG_HOST_DOMAIN};
@@ -668,32 +688,41 @@ server {
     # Proxy Setup
     location / {
         # HTTP Method Deny
+        #
         if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
             return 444;
         }
         # Cache Control
+        #
         add_header Cache-Control "public, max-age=43200";
+
+        # Cache Setup
+        #
         set \$do_not_cache       0;
         if (\$request_method != "GET") {
             set \$do_not_cache    1;
         }
-        #if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY})') {
-        if (\$uri !~ '/wp-(admin|includes|cron\.php|comments|login\.php|content)') {
-            set \$do_not_cache   1;
-        }
-        if (\$http_user_agent ~* '(DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter)') {
-            set \$do_not_cache   1;
-        }
-        if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
+        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY})') {
             set \$do_not_cache   1;
         }
         if (\$http_cookie ~* "comment_author_|wordpress_(?!test_cookie)|wp-postpass_" ) {
             set \$do_not_cache   1;
         }
+        # Mobile UA Setup
+        #
+        set \$mobile "";
+        if (\$http_user_agent ~* '(DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter)') {
+            set \$mobile ".kt";
+        }
+        if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
+            set \$mobile ".sp";
+        }
+
         # REVERSE PROXY SETUP
+        #
         proxy_no_cache           \$do_not_cache;
         proxy_cache_bypass       \$do_not_cache;
-        proxy_cache_key          "\$scheme://\$host\$request_uri";
+        proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
         proxy_cache              cache_${CONFIG_HOST_DOMAIN};
         proxy_pass               ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
     }
@@ -735,7 +764,7 @@ server {
     }
 
     # WordPress no Admin for HTTP
-    if (\$uri !~ '/wp-(admin|includes|cron\.php|comments|login\.php|content|author)') {
+    if (\$uri !~ '/author') {
         rewrite ^(.*)?$ https://\$host last;
         break;
     }
@@ -745,6 +774,7 @@ server {
     location ~ /(wp-config\.php|wp-mail\.php|install\.php|xmlrpc\.php) {
         allow   127.0.0.1;
         allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
         deny    all;
     }
 
