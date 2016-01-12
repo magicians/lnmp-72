@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-70 v0.0.1
+#### lnmp-70 v1.0.0
 ############################################################################
 source ./initfile.txt
 source ./default.txt
@@ -234,7 +234,7 @@ sed -i "s|^error_log /var/log/nginx/error.log|error_log ${APACHE_LOG_DIRECTORY}/
 sed -i "s|access_log  /var/log/nginx/access.log  main|access_log  ${APACHE_LOG_DIRECTORY}/nginx_access.log  main|g" /etc/nginx/nginx.conf
 sed -i "s|keepalive_timeout   65|keepalive_timeout   ${NGINX_KEEPALIVE_TIMEOUT}|g" /etc/nginx/nginx.conf
 sed -i "20a\    server_tokens       off;" /etc/nginx/nginx.conf
-sed -i "35a\    index ${NGINX_INDEX_FILE_LIST};" /etc/nginx/nginx.conf
+sed -i "34a\    index ${NGINX_INDEX_FILE_LIST};" /etc/nginx/nginx.conf
 vim /etc/nginx/nginx.conf
 # Default GZIP Setting.
 cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/00-gzip.conf

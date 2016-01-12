@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-70 v0.0.1
+#### lnmp-70 v1.0.0
 ############################################################################
 source ./initfile.txt
 source ./default.txt
@@ -32,6 +32,8 @@ rm -fr ${APACHE_FILE_DIRECTORY}/wordpress
 cd ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/
 mv ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config-sample.php ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 cp ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/index.php ${APACHE_FILE_DIRECTORY}/index.php
+## -- index.php Edit.
+sed -i "s|'/wp-blog-header.php' );$|'/${WP_CONF_DIR}/wp-blog-header.php' );|g" ${APACHE_FILE_DIRECTORY}/index.php
 vim ${APACHE_FILE_DIRECTORY}/index.php
 ## -- wp-config.php Edit.
 sed -i "s|database_name_here|${CREATE_DB_NAME}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
@@ -39,6 +41,8 @@ sed -i "s|username_here|${DB_USER_NAME}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DI
 sed -i "s|password_here|${DB_USER_PASSWD}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 sed -i "s|localhost|${WP_DB_UNIX_PATH}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 sed -i "s|wp_|${WP_DB_PREFIX}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+sed -i "84a\define('FORCE_SSL_ADMIN', true);" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+sed -i "s|\r||g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 vim ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} ${APACHE_FILE_DIRECTORY}/*
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/*
