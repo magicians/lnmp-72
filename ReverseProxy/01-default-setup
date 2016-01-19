@@ -127,7 +127,8 @@ echo "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT" >> \$IPTABLES_CON
 
 #接続時のSSHポート及びサーバポートの設定
 #SSH
-echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport ${SSH_EDIT_PORT} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m state --syn --state NEW --dport ${SSH_EDIT_PORT} -m hashlimit --hashlimit-name t_sshd --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport ${SSH_EDIT_PORT} -j ACCEPT" >> \$IPTABLES_CONF_TMP
 #HTTP
 echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 #HTTPS
@@ -205,7 +206,7 @@ echo "-A INPUT -d 0.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
 echo "-A INPUT -d 255.255.255.255/32 -j DROP" >> \$IPTABLES_CONF_TMP
 
 #セキュアセットアップ・Ping攻撃の破棄
-echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-upto 1/sec --hashlimit-burst 5 --hashlimit-mode srcip --hashlimit-name input_icmp --hashlimit-htable-expire 300000 -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-upto 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-name input_icmp --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j DROP" >> \$IPTABLES_CONF_TMP
 
 ##セキュアセットアップ・Ping及び113ポートからの接続を拒否
 echo "-A INPUT -p tcp -m tcp --dport 113 -j REJECT --reject-with tcp-reset" >> \$IPTABLES_CONF_TMP

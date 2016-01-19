@@ -26,6 +26,12 @@ GLOBAL_ACCESS_HOSTS=
 # -- ssh Default Port Number.
 SSH_EDIT_PORT=22
 #
+# -- hashlimit-burst Default 10Packet / 2min.
+HASH_LIMIT_PACKET=10
+#
+# -- ssh hashlimit time(ms). / 120000ms = 2min.
+HASH_LIMIT_TIME=120000
+#
 # -- reverse proxy backend port Number.
 REVERSE_PROXY_PORT=8080
 #
