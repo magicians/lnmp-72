@@ -667,10 +667,12 @@ vi /etc/postfix/main.cf
 #
 fi
 ## 再起動
-echo "再起動しますか？ [y/n] \n"
+echo "再起動 [y] / シャットダウン [n] \n"
 read opt_install15
 if [ ${opt_install15} = "y" ] ; then
 reboot
+else
+shutdown -h now
 fi
 #
 ############################################################################
