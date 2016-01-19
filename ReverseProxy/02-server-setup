@@ -26,7 +26,10 @@ echo "ここで一度、別のターミナルを立ち上げてください。"
 echo "ユーザ権限でSSHログインし NS04_5-NGXBUILD.sh を実行して Nginx をビルドして下さい。"
 echo -e " \n"
 #### PHP Install.
-echo -e "PHP7.0 をインストールします。\n"
+echo -e "PHP7.x をインストールする場合は [y] / PHP5.6 をインストールする場合は [n]"
+read DEFPHPINST_70_56
+if [ ${DEFPHPINST_70_56} = "y" ] ; then
+echo -e "PHP7.x をインストールします。\n"
 yum --enablerepo=remi --enablerepo=remi-php70 install php \
 php-cli \
 php-devel \
@@ -40,6 +43,22 @@ php-mysqli \
 mariadb \
 mariadb-server \
 php-fpm
+else
+echo -e "PHP5.6 をインストールします。\n"
+yum --enablerepo=remi --enablerepo=remi-php56 install php \
+php-cli \
+php-devel \
+php-mbstring \
+php-gd \
+php-pear \
+php-xml \
+php-pecl-apc \
+php-mcrypt \
+php-mysqli \
+mariadb \
+mariadb-server \
+php-fpm
+fi
 ####
 fi
 clear
