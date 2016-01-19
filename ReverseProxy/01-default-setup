@@ -617,14 +617,26 @@ cat <<EOF > /etc/cron.weekly/clamscan
 #!/bin/bash
 yum -y update clamd > /dev/null 2>&1
 /usr/bin/freshclam > /dev/null
-/usr/bin/clamscan -i -r --remove /home >> /home/${USER_NAME}/logs/clamscan/clamscan.txt 2>&1
+/usr/bin/clamscan -i -r --remove /home >> /home/${USER_NAME}/logs/clamscan/clamscan.log 2>&1
 cd /home/${USER_NAME}/logs/clamscan
-mv clamscan.txt clamscan."\$(date +%Y%m%d-%I%M%S).txt"
-chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/*.txt
+cp clamscan.log clamscan."\$(date +%Y%m%d-%I%M%S).txt"
+chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/clamscan.*.txt
 EOF
 #
 chmod +x /etc/cron.weekly/clamscan
 vim /etc/cron.weekly/clamscan
+#
+cat <<EOF > /etc/logrotate.d/clamscan
+/home/${USER_NAME}/logs/clamscan/*.log {
+    missingok
+    notifempty
+    create 644 ${USER_NAME} ${USER_NAME}
+    postrotate
+        killall -HUP clamd 2>/dev/null || :
+    endscript
+}
+EOF
+vim /etc/logrotate.d/clamscan
 ## clamd startup
 systemctl enable clamd
 systemctl start clamd

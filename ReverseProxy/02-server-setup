@@ -387,13 +387,13 @@ server {
     server_name ${CONFIG_HOST_DOMAIN};
 
     ssl on;
-    ssl_certificate      ${FRONT_SSL_CERT};
-    ssl_certificate_key  ${FRONT_SSL_KEY};
-    ssl_dhparam ${FRONT_SSL_DH};
-    ssl_stapling         on;
-    ssl_stapling_verify  on;
+    ssl_certificate         ${FRONT_SSL_CERT};
+    ssl_certificate_key     ${FRONT_SSL_KEY};
+    ssl_dhparam             ${FRONT_SSL_DH};
+    ssl_stapling            on;
+    ssl_stapling_verify     on;
     ssl_trusted_certificate ${FRONT_SSLCA_CERT};
-    resolver             127.0.0.1;
+    resolver                127.0.0.1;
 
     ssl_session_timeout 5m;
 
@@ -565,13 +565,13 @@ server {
     server_name ${CONFIG_HOST_DOMAIN};
 
     ssl on;
-    ssl_certificate      ${FRONT_SSL_CERT};
-    ssl_certificate_key  ${FRONT_SSL_KEY};
-    ssl_dhparam ${FRONT_SSL_DH};
-    ssl_stapling         on;
-    ssl_stapling_verify  on;
+    ssl_certificate         ${FRONT_SSL_CERT};
+    ssl_certificate_key     ${FRONT_SSL_KEY};
+    ssl_dhparam             ${FRONT_SSL_DH};
+    ssl_stapling            on;
+    ssl_stapling_verify     on;
     ssl_trusted_certificate ${FRONT_SSLCA_CERT};
-    resolver             127.0.0.1;
+    resolver                127.0.0.1;
 
     ssl_session_timeout 5m;
 
@@ -803,3 +803,18 @@ mysql_secure_installation
 rm -fr ${NGINX_BUILD_PATH}/rpm
 rm -f ${NGINX_BUILD_PATH}/.rpmmacros
 fi
+## clamd cron setup
+cat <<EOF > /etc/cron.daily/public
+#!/bin/bash
+yum -y update clamd > /dev/null 2>&1
+/usr/bin/freshclam > /dev/null
+/usr/bin/clamscan -i -r --remove /var/www >> /home/${USER_NAME}/logs/clamscan/clamscan_pub.log 2>&1
+cd /home/${USER_NAME}/logs/clamscan
+cp clamscan_pub.log clamscan_pub."\$(date +%Y%m%d-%I%M%S).txt"
+chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/clamscan_pub.*.txt
+EOF
+#
+chmod +x /etc/cron.daily/public
+vim /etc/cron.daily/public
+## clamd startup
+systemctl restart clamd
