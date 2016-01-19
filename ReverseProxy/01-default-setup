@@ -274,7 +274,6 @@ if [ ${selinuxdisabled} = "y" ] ; then
 	sed -i 's|^SELINUX=enforcing$|SELINUX=disabled|g' /etc/selinux/config
 else
 	sed -i 's|^SELINUX=enforcing$|SELINUX=permissive|g' /etc/selinux/config
-fi
 	vi /etc/selinux/config
 	vi /etc/sysconfig/selinux
 	yum install selinux-policy-targeted selinux-policy-devel
@@ -286,6 +285,8 @@ fi
 	#semanage port -l | grep http
 	#semanage port -a -t http_cache_port_t -p tcp ${REVERSE_PROXY_PORT}
 	#semanage port -l | grep http
+fi
+#
 fi
 #
 fi
