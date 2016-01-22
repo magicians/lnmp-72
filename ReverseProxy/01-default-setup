@@ -111,9 +111,11 @@ echo ":OUTPUT ACCEPT [0:0]" >> \$IPTABLES_CONF_TMP
 echo "-A OUTPUT -o lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
 echo "-A INPUT -i lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
-#Ping エコー応答・要求のみ 許可
+#ICMP エコー応答許可
 echo "-A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#ICMP さくらのシンプル監視のみ許可
+echo "-A INPUT -p icmp -m icmp --icmp-type 8 -s 61.211.224.144/28 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #パケットチェック
 echo "-A INPUT -p 50 -j ACCEPT" >> \$IPTABLES_CONF_TMP
@@ -124,23 +126,6 @@ echo "-A INPUT -d 224.0.0.251/32 -p udp -m udp --dport 5353 -j ACCEPT" >> \$IPTA
 
 #接続済みのセッションを接続許可
 echo "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT" >> \$IPTABLES_CONF_TMP
-
-#接続時のSSHポート及びサーバポートの設定
-#SSH
-echo "-A INPUT -p tcp -m state --syn --state NEW --dport ${SSH_EDIT_PORT} -m hashlimit --hashlimit-name t_sshd --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
-#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport ${SSH_EDIT_PORT} -j ACCEPT" >> \$IPTABLES_CONF_TMP
-#HTTP
-echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-#HTTPS
-echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-
-#メールサーバのポート設定
-#SMTP
-#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 25 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-#POP
-#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 110 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-#IMAP
-#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 143 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #LOCAL IP Addr ACCEPT, プライベートネットワークを構築している場合のみ変更する
 echo "-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT" >> \$IPTABLES_CONF_TMP
@@ -206,13 +191,29 @@ echo "-A INPUT -d 0.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
 echo "-A INPUT -d 255.255.255.255/32 -j DROP" >> \$IPTABLES_CONF_TMP
 
 #セキュアセットアップ・Ping攻撃の破棄
-echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-upto 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-name input_icmp --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j DROP" >> \$IPTABLES_CONF_TMP
+#echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-upto 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-name input_icmp --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j DROP" >> \$IPTABLES_CONF_TMP
 
 ##セキュアセットアップ・Ping及び113ポートからの接続を拒否
 echo "-A INPUT -p tcp -m tcp --dport 113 -j REJECT --reject-with tcp-reset" >> \$IPTABLES_CONF_TMP
 
-#ICMPからの接続を拒否
+#ICMPからの接続をリジェクト
 echo "-A INPUT -j REJECT --reject-with icmp-host-prohibited" >> \$IPTABLES_CONF_TMP
+
+#接続時のSSHポート及びサーバポートの設定
+#SSH
+echo "-A INPUT -p tcp -m state --syn --state NEW --dport ${SSH_EDIT_PORT} -m hashlimit --hashlimit-name t_sshd --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#HTTP
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#HTTPS
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#メールサーバのポート設定
+#SMTP
+#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 25 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#POP
+#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 110 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#IMAP
+#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 143 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #Logging
 echo "-A INPUT -m limit --limit 5/m --limit-burst 7 -j LOG --log-prefix \" DEFAULT DROP \" " >> \$IPTABLES_CONF_TMP
@@ -278,13 +279,13 @@ else
 	vi /etc/sysconfig/selinux
 	yum install selinux-policy-targeted selinux-policy-devel
 	# SSH Port
-	semanage port -l | grep ssh
-	semanage port -a -t ssh_port_t -p tcp ${SSH_EDIT_PORT}
-	semanage port -l | grep ssh
+	#semanage port -l | grep ssh
+	#semanage port -a -t ssh_port_t -p tcp ${SSH_EDIT_PORT}
+	#semanage port -l | grep ssh
 	# HTTP Port
-	#semanage port -l | grep http
-	#semanage port -a -t http_cache_port_t -p tcp ${REVERSE_PROXY_PORT}
-	#semanage port -l | grep http
+	semanage port -l | grep http
+	semanage port -a -t http_cache_port_t -p tcp ${REVERSE_PROXY_PORT}
+	semanage port -l | grep http
 fi
 #
 fi
@@ -353,52 +354,6 @@ systemctl start yum-cron
 etckeeper init
 etckeeper commit "VPS Installed First Commit."
 #
-fi
-############################################################################
-#### portsentry install. - Portスキャンをされた場合、拒否するソフトウェアを追加。
-############################################################################
-#
-echo -e "portsentryのインストールを開始します。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install09
-if [ ${opt_install09} = "y" ] ; then
-wget http://ftp.riken.go.jp/Linux/freshrpms/redhat/9/portsentry/portsentry-1.1-fr8.src.rpm
-rpmbuild --rebuild portsentry-1.1-fr8.src.rpm
-rm -f portsentry-1.1-fr8.src.rpm
-rpm -ivh /root/rpmbuild/RPMS/*/portsentry*.rpm
-rm -f /root/rpmbuild/RPMS/*/portsentry*.rpm
-rm -fr /root/rpmbuild
-#
-############################################################################
-#### KILL_HOSTS_DENY. - 設定ファイルを編集。
-############################################################################
-#
-sed -i 's|^#KILL_HOSTS_DENY="ALL: $TARGET$ : DENY"$|KILL_HOSTS_DENY="ALL: $TARGET$ : DENY"|g' /etc/portsentry/portsentry.conf
-vi /etc/portsentry/portsentry.conf
-#
-############################################################################
-#### portsentry WhiteList Edit. - ホワイトリストに自身の接続するIPAddrを追加する。
-############################################################################
-#
-echo "Portsentry WhiteList のインストール先はローカルですか？ [y/n]"
-read porthosts
-if [ ${porthosts} = "y" ] ; then
-	# ローカル接続での接続IPを書き込む
-	echo "${LOCAL_IP_ADDR}" >> /etc/portsentry/portsentry.ignore
-else
-	echo "接続先は固定IPですか？ [y/n]"
-	read globalstaticip
-
-	if [ ${globalstaticip} = "y" ] ; then
-		# グローバル接続での固定IPを書き込む
-		echo "${GLOBAL_IP_ADDR}" >> /etc/portsentry/portsentry.ignore
-	else
-		echo "IPアドレス以外でのホワイトリストの設定されません。"
-	fi
-fi
-vi /etc/portsentry/portsentry.ignore
-#
-/sbin/chkconfig portsentry on
 fi
 ############################################################################
 #### denyhosts install. Denyhosts の追加。
