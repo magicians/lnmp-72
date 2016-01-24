@@ -44,6 +44,18 @@ sed -i "s|wp_|${WP_DB_PREFIX}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-conf
 sed -i "84a\define('FORCE_SSL_ADMIN', true);" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 sed -i "s|\r||g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 vim ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+## -- WP Plugins install.
+cd ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-content/plugins/
+curl -O https://downloads.wordpress.org/plugin/jetpack.3.9.1.zip
+curl -O https://downloads.wordpress.org/plugin/crazy-bone.0.6.0.zip
+curl -O https://downloads.wordpress.org/plugin/edit-author-slug.1.1.2.zip
+curl -O https://downloads.wordpress.org/plugin/nginx-champuru.3.1.1.zip
+unzip jetpack.3.9.1.zip
+unzip crazy-bone.0.6.0.zip
+unzip edit-author-slug.1.1.2.zip
+unzip nginx-champuru.3.1.1.zip
+rm -f *.zip
+ls -la
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} ${APACHE_FILE_DIRECTORY}/*
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/*
 #####################################
