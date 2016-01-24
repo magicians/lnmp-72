@@ -40,6 +40,7 @@ php-xml \
 php-pecl-apc \
 php-mcrypt \
 php-mysqli \
+php-pecl-zip \
 mariadb \
 mariadb-server \
 php-fpm
@@ -55,6 +56,7 @@ php-xml \
 php-pecl-apc \
 php-mcrypt \
 php-mysqli \
+php-pecl-zip \
 mariadb \
 mariadb-server \
 php-fpm
@@ -342,9 +344,13 @@ echo "Nginx PHP-FPM Setup. \n"
 cat <<EOF > /etc/nginx/php_fpmd
 # PHP-FPM SSL Setting.
 #
+# concrete5
+#    location ~ \.php($|/) {
+# WordPress
     location ~ \.php\$ {
-        ## baserCMS
+        ## concrete5 is Comment out.
         try_files           \$uri =404;
+        ## concrete5 is Comment out.
         include             /etc/nginx/fastcgi_params;
         fastcgi_pass        unix:/var/run/php-fpm/www.sock;
         fastcgi_index       index.php;
@@ -437,7 +443,7 @@ server {
     include php_fpmd;
 
     # Permalink Setup
-    #   
+    # WordPress
     location ~ / {
         # static files
         if (-f \$request_filename) {
@@ -449,6 +455,14 @@ server {
             rewrite ^(.+)$ /index.php?q=\$1 last;
         }
     }
+
+    # Permalink Setup
+    # concrete5
+    #location ~ / {
+    #    if (!-e $request_filename) {
+    #        rewrite ^ /index.php last;
+    #    }
+    #}
 
     # Proxy Setup
     location / {
@@ -474,6 +488,11 @@ server {
         if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY})') {
             set \$do_not_cache   1;
         }
+        # baserCMS
+        #if ($http_cookie ~* "BASERCMS" ) {
+        # concrete5
+        #if ($http_cookie ~* "CONCRETE5|CONCRETE5_INSTALL_TEST|dashboardPanelStatus" ) {
+        # WordPress
         if (\$http_cookie ~* "comment_author_|wordpress_(?!test_cookie)|wp-postpass_" ) {
             set \$do_not_cache   1;
         }
@@ -511,7 +530,10 @@ server {
         deny    all;
     }
 
+    # WordPress
     location ~ /uploads/ {
+    # concrete5
+    # location ~ /files/ {
         valid_referers    ${NGINX_REFERERS_URI};
         if (\$invalid_referer) {
             return 403;

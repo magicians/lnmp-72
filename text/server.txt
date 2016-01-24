@@ -143,12 +143,17 @@ NGINX_LARGE_CLIENT_HEAD=8k
 NGINX_BACKEND_NAME=backend
 #NGINX_BACKEND_NAME=${SETUP_WEBSERVER_HOSTNAME}
 #
-# -- Nginx Backend URI
+# -- Nginx Backend URI / baserCMS
 #NGINX_BACKEND_DIRECTORY=admin\|installations
-NGINX_BACKEND_DIRECTORY=wp-admin\|wp-login\.php
+#
+# -- Nginx Backend URI / WordPress
+NGINX_BACKEND_DIRECTORY=wp-admin\|wp-login\\.php
+#
+# -- Nginx Backend URI / concrete5
+#NGINX_BACKEND_DIRECTORY=dashboard
 #
 # -- Nginx Referers URI
-NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com
+NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ *\.wordpress\.com
 #
 # -- Nginx Deny File and Dir.
 NGINX_DENY_ALL_DIR=ht\|git\|svn

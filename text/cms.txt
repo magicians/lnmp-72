@@ -36,3 +36,10 @@ WP_DB_UNIX_PATH=localhost:/var/lib/mysql/mysql.sock
 # -- WP DB PREFIX
 WP_DB_PREFIX=wp_
 ###############################################################################
+# -- Install Host
+C5_SCHEMA=${NGINX_SCHEMA}
+# -- concrete5 Version
+C5_VERSION=concrete5.7.5.5
+# -- concrete5 Download URL
+C5_DL_URL=http://www.concrete5.org/download_file/-/view/85712/
+###############################################################################

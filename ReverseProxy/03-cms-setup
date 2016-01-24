@@ -16,7 +16,7 @@ mysql -u root -p${DB_ROOT_PASSWD}
 ####
 clear
 ############################################################################
-echo -e "CMS Install for WordPress [y] \n"
+echo -e "CMS Install for WordPress [y] / concrete5 [n] \n"
 read SELECTCMSINSTALL
 if [ ${SELECTCMSINSTALL} = "y" ] ; then
 clear
@@ -50,19 +50,33 @@ curl -O https://downloads.wordpress.org/plugin/jetpack.3.9.1.zip
 curl -O https://downloads.wordpress.org/plugin/crazy-bone.0.6.0.zip
 curl -O https://downloads.wordpress.org/plugin/edit-author-slug.1.1.2.zip
 curl -O https://downloads.wordpress.org/plugin/nginx-champuru.3.1.1.zip
+curl -O https://downloads.wordpress.org/plugin/wp-sitemanager.1.1.8.zip
 unzip jetpack.3.9.1.zip
 unzip crazy-bone.0.6.0.zip
 unzip edit-author-slug.1.1.2.zip
 unzip nginx-champuru.3.1.1.zip
+unzip wp-sitemanager.1.1.8.zip
 rm -f *.zip
-ls -la
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} ${APACHE_FILE_DIRECTORY}/*
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/*
 #####################################
 echo "WordPress-$WP_VERSION install end."
+else
+echo "$C5_VERSION install start."
+cd ${APACHE_FILE_DIRECTORY}
+wget http://www.concrete5.org/download_file/-/view/85712/
+mv ${APACHE_FILE_DIRECTORY}/index.html ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip
+unzip ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip
+rm -f ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip
+mv ${APACHE_FILE_DIRECTORY}/${C5_VERSION}/* ${APACHE_FILE_DIRECTORY}/
+rm -fr ${APACHE_FILE_DIRECTORY}/${C5_VERSION}
+chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} ${APACHE_FILE_DIRECTORY}/*
+chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/*
+echo "$C5_VERSION install end."
+fi
+#####################################
 clear
 /usr/sbin/nginx -t
-#####################################
 echo "Webサーバを再起動しますか？ [y/n]"
 read WP_WEBSERVER_RESTART
 #####################################
@@ -74,13 +88,12 @@ systemctl restart mariadb
 fi
 #####################################
 clear
-echo "WordPress-$WP_VERSION のインストールに関する事前準備は完了しました。"
+echo "選択したCMSのインストールに関する事前準備は完了しました。"
 echo "ブラウザを起動して引き続きインストール作業を行ってください。"
 echo "その後 last_optimization を実行し、ファイルのチェックを行ってください。"
 #### Adminer Install.
 #https://www.adminer.org/static/download/4.2.3/adminer-4.2.3.php
 # Adminer Pluginでも可。
 ############################################################
-fi
 ############################################################
 chmod +x ${INSTALL_PATH}/last_optimization
