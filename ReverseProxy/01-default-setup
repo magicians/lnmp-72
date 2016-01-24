@@ -116,6 +116,7 @@ echo "-A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #ICMP さくらのシンプル監視のみ許可
 echo "-A INPUT -p icmp -m icmp --icmp-type 8 -s 61.211.224.144/28 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p icmp -m icmp --icmp-type 8 -d 61.211.224.144/28 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #パケットチェック
 echo "-A INPUT -p 50 -j ACCEPT" >> \$IPTABLES_CONF_TMP
