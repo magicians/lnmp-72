@@ -12,6 +12,7 @@ mysql -u root -p${DB_ROOT_PASSWD} -e "CREATE DATABASE ${CREATE_DB_NAME} DEFAULT 
 mysql -u root -p${DB_ROOT_PASSWD} -e "GRANT ALL PRIVILEGES ON ${CREATE_DB_NAME}.* TO ${DB_USER_NAME}@localhost IDENTIFIED BY \"${DB_USER_PASSWD}\";"
 mysql -u root -p${DB_ROOT_PASSWD} -e "DELETE FROM mysql.user WHERE User='root' AND host IN ('127.0.0.1', '::1');"
 mysql -u root -p${DB_ROOT_PASSWD} -e "FLUSH PRIVILEGES;"
+mysql -u root -p${DB_ROOT_PASSWD} -e "SHOW DATABASES;"
 mysql -u root -p${DB_ROOT_PASSWD}
 ####
 clear
@@ -44,19 +45,58 @@ sed -i "s|wp_|${WP_DB_PREFIX}|g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-conf
 sed -i "84a\define('FORCE_SSL_ADMIN', true);" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 sed -i "s|\r||g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 vim ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
+clear
+echo -e "以下のプラグインを追加しますか？\n"
+echo -e "( JetPack, CrazyBone, EditAuthorSlug, NginxCacheController, WP-SiteManager ) \n"
+echo -e "必要と思えるプラグインだけ選択して下さい。 [y/n] \n"
+read setpluginsinstalls
+if [ ${setpluginsinstalls} = "y" ] ; then
 ## -- WP Plugins install.
 cd ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-content/plugins/
+clear
+# JetPack
+echo -e "JetPack をインストールしますか？ [y/n] \n"
+read setjetpackinstall
+if [ ${setjetpackinstall} = "y" ] ; then
 curl -O https://downloads.wordpress.org/plugin/jetpack.3.9.1.zip
-curl -O https://downloads.wordpress.org/plugin/crazy-bone.0.6.0.zip
-curl -O https://downloads.wordpress.org/plugin/edit-author-slug.1.1.2.zip
-curl -O https://downloads.wordpress.org/plugin/nginx-champuru.3.1.1.zip
-curl -O https://downloads.wordpress.org/plugin/wp-sitemanager.1.1.8.zip
 unzip jetpack.3.9.1.zip
+fi
+clear
+# CrazyBone
+echo -e "CrazyBone をインストールしますか？ [y/n] \n"
+read setcrazyboneinstall
+if [ ${setcrazyboneinstall} = "y" ] ; then
+curl -O https://downloads.wordpress.org/plugin/crazy-bone.0.6.0.zip
 unzip crazy-bone.0.6.0.zip
+fi
+clear
+# Edit Author Slug
+echo -e "EditAuthorSlug をインストールしますか？ [y/n] \n"
+read seteasinstall
+if [ ${seteasinstall} = "y" ] ; then
+curl -O https://downloads.wordpress.org/plugin/edit-author-slug.1.1.2.zip
 unzip edit-author-slug.1.1.2.zip
+fi
+clear
+# Nginx Cache Controller
+echo -e "NginxCacheController をインストールしますか？ [y/n] \n"
+read setnccinstall
+if [ ${setnccinstall} = "y" ] ; then
+curl -O https://downloads.wordpress.org/plugin/nginx-champuru.3.1.1.zip
 unzip nginx-champuru.3.1.1.zip
+fi
+clear
+# WP-SiteManager
+echo -e "WP-SiteManager をインストールしますか？ [y/n] \n"
+read setwpsminstall
+if [ ${setwpsminstall} = "y" ] ; then
+curl -O https://downloads.wordpress.org/plugin/wp-sitemanager.1.1.8.zip
 unzip wp-sitemanager.1.1.8.zip
+fi
+####
 rm -f *.zip
+####
+fi
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} ${APACHE_FILE_DIRECTORY}/*
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/*
 #####################################
