@@ -2,16 +2,21 @@
 #### lnmp-70 v1.0.0
 ## rkhunter new hash. rkhunterがスキャンする際に利用するハッシュの新規生成。
 #
-source ./default.txt
+source ./initfile.txt
 ####
 cat <<EOF > /home/${USER_NAME}/check.sh
 #!/bin/bash
-sudo sh /etc/cron.weekly/clamscan
-sudo sh /etc/cron.daily/public
-sudo sh /etc/cron.daily/tripwire.sh
-sudo rkhunter --update
-sudo rkhunter --propupd
-sudo rkhunter --check --skip-keypress
+sh /etc/cron.weekly/clamscan
+sh /etc/cron.daily/public
+sh /etc/cron.daily/tripwire.sh
+rkhunter --update
+rkhunter --propupd
+echo -e "rootkit チェックしますか？ [y/n] \n"
+read checkrootkit
+# Rootkit Check.
+if [ ${checkrootkit} = "y" ] ; then
+rkhunter --check --skip-keypress
+fi
 EOF
 vim /home/${USER_NAME}/check.sh
 chmod +x /home/${USER_NAME}/check.sh
