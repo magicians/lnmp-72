@@ -19,15 +19,19 @@ BACKEND_SERVER_PORT=127.0.0.1:${REVERSE_PROXY_PORT}
 ###############################################################################
 # -- SSL Cert Path.
 FRONT_SSL_CERT=/etc/pki/tls/cert/localhost.crt
+#FRONT_SSL_CERT=
 #
 # -- SSL Key Path.
 FRONT_SSL_KEY=/etc/pki/tls/private/localhost.pem
+#FRONT_SSL_KEY=
 #
 # -- SSL CA Cert Path.
 FRONT_SSLCA_CERT=/etc/pki/tls/cert/ca.crt
+#FRONT_SSLCA_CERT=
 #
 # -- SSL DH Param Path.
 FRONT_SSL_DH=/etc/nginx/dhparam.pem
+#FRONT_SSL_DH=
 #
 # -- SSL DH Param.
 FRONT_SSL_BIT=2048
@@ -103,6 +107,17 @@ GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
 ###############################################################################
 ## 2-6. LNMP / Nginx Setup Config.
 ###############################################################################
+# -- Nginx Worker Process xx
+#NGINX_WORKER_PROCESSES=1
+NGINX_WORKER_PROCESSES=2
+#NGINX_WORKER_PROCESSES=3
+#NGINX_WORKER_PROCESSES=auto
+# -- Nginx worker_cpu_affinity auto / ver.1.9.10 ~ | 010 010 / ~ ver.1.9.9
+#NGINX_WORKER_CPU_AFFINITY=010\ 010
+NGINX_WORKER_CPU_AFFINITY=auto
+# -- worker_priority 10
+NGINX_WORKER_PRIORITY=10
+#
 # -- UPSTREAM KEEPALIVE
 NGINX_KEEPALIVE_TIMEOUT=5
 NGINX_KEEPALIVE_UPSTREAM=10

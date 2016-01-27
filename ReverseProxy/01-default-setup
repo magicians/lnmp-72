@@ -113,10 +113,11 @@ echo "-A INPUT -i lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #ICMP エコー応答許可
 echo "-A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-name t_icmp --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #ICMP さくらのシンプル監視のみ許可
-echo "-A INPUT -p icmp -m icmp --icmp-type 8 -s 61.211.224.144/28 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p icmp -m icmp --icmp-type 8 -d 61.211.224.144/28 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#echo "-A INPUT -p icmp -m icmp --icmp-type 8 -s 61.211.224.144/28 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+#echo "-A INPUT -p icmp -m icmp --icmp-type 8 -d 61.211.224.144/28 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #パケットチェック
 echo "-A INPUT -p 50 -j ACCEPT" >> \$IPTABLES_CONF_TMP
@@ -127,8 +128,7 @@ echo "-A INPUT -d 224.0.0.251/32 -p udp -m udp --dport 5353 -j ACCEPT" >> \$IPTA
 
 #接続時のSSHポート及びサーバポートの設定
 #SSH
-echo "-A INPUT -p tcp -m state --syn --state NEW --dport ${SSH_EDIT_PORT} -s ${GLOBAL_IP_ADDR} -m hashlimit --hashlimit-name t_sshd --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p tcp -m state --syn --state NEW --dport ${SSH_EDIT_PORT} -d ${GLOBAL_IP_ADDR} -m hashlimit --hashlimit-name t_sshd --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m state --syn --state NEW --dport ${SSH_EDIT_PORT} -m hashlimit --hashlimit-name t_sshd --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
 #HTTP
 echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 #HTTPS
@@ -413,7 +413,15 @@ read opt_install12
 if [ ${opt_install12} = "y" ] ; then
 yum -y install rkhunter
 rkhunter --update
-sed -i "s|^#ALLOW_SSH_ROOT_USER=no$|ALLOW_SSH_ROOT_USER=no|g" /etc/rkhunter.conf
+mkdir /etc/.clamav
+touch /etc/.clamav/exclude
+sed -i "642a\# for Clamav" /etc/rkhunter.conf
+sed -i "643a\ALLOWHIDDENDIR=/etc/.clamav" /etc/rkhunter.conf
+sed -i "685a\# for Clamav" /etc/rkhunter.conf
+sed -i "686a\ALLOWHIDDENFILE=/etc/.clamav/exclude" /etc/rkhunter.conf
+sed -i "687a\#Passwd" /etc/rkhunter.conf
+sed -i "688a\ALLOWHIDDENFILE=/etc/.pwd.lock" /etc/rkhunter.conf
+sed -i "308a\ALLOW_SSH_ROOT_USER=no" /etc/rkhunter.conf
 sed -i "s|^ALLOW_SSH_ROOT_USER=unset$|#ALLOW_SSH_ROOT_USER=unset|g" /etc/rkhunter.conf
 vi /etc/rkhunter.conf
 # passwd / group permission 604
@@ -553,34 +561,54 @@ fi
 #### clamd install. VirusScanを追加。
 ############################################################################
 #
-echo -e "clamdのインストール。[y] \n"
+echo -e "clamavのインストール。[y] \n"
 echo -e "既に一回このシェルを通している場合は [n] \n"
 read opt_install13
 if [ ${opt_install13} = "y" ] ; then
-yum -y install clamd
-sed -i "s|^TCPSocket 3310$|#\0|" /etc/clamd.conf
-sed -i "s|^TCPAddr 127.0.0.1$|#\0|" /etc/clamd.conf
-sed -i "s|^#ExcludePath \^/proc/$|ExcludePath \^/proc/|" /etc/clamd.conf
-sed -i "s|^#ExcludePath \^/sys/$|ExcludePath \^/sys/|" /etc/clamd.conf
-sed -i "s|^DetectBrokenExecutables yes$|#\0|" /etc/clamd.conf
-sed -i "s|^User clamav$|#\0|" /etc/clamd.conf
-vi /etc/clamd.conf
-sed -i "s|^DatabaseOwner clamav$|DatabaseOwner root|" /etc/freshclam.conf
-vi /etc/freshclam.conf
+yum install clamav clamav-update
+# Freshclam Setup
+sed -i "s|^Example|#\0|g" /etc/freshclam.conf
+sed -i "s|^#DatabaseDirectory /var/lib/clamav$|DatabaseDirectory /var/lib/clamav|g" /etc/freshclam.conf
+sed -i "s|^#UpdateLogFile /var/log/freshclam.log$|UpdateLogFile /var/log/freshclam.log|g" /etc/freshclam.conf
+sed -i "s|^DatabaseOwner clamupdate$|#\0|g" /etc/freshclam.conf
+sed -i "s|^DatabaseMirror database.clamav.net$|#\0|g" /etc/freshclam.conf
+sed -i "56a\DatabaseOwner root" /etc/freshclam.conf
+sed -i "79a\DatabaseMirror db.jp.clamav.net" /etc/freshclam.conf
+sed -i "s|^FRESHCLAM_DELAY=disabled-warn|#\0|g" /etc/sysconfig/freshclam
+vim /etc/freshclam.conf
+vim /etc/sysconfig/freshclam
+# ExcludeDirectory
+echo "/proc/" >> /etc/.clamav/exclude
+echo "/sys/" >> /etc/.clamav/exclude
+vim /etc/.clamav/exclude
+chmod 700 /etc/.clamav
+chmod 600 /etc/.clamav/exclude
 #
 ## clamd cron setup
-cat <<EOF > /etc/cron.weekly/clamscan
+cat <<EOF > /etc/cron.daily/clamscan
 #!/bin/bash
-yum -y update clamd > /dev/null 2>&1
-/usr/bin/freshclam > /dev/null
-/usr/bin/clamscan -i -r --remove /home >> /home/${USER_NAME}/logs/clamscan/clamscan.log 2>&1
+ExcludeDirectory=/etc/.clamav/exclude
+if [ -s \$ExcludeDirectory ]; then
+for i in \`cat \$ExcludeDirectory\`
+do
+if [ \$(echo "\$i"|grep \/$) ]; then
+i=\`echo \$i|sed -e 's/^\([^ ]*\)\/$/\1/p' -e d\`
+excludeopt="\${excludeopt} --exclude-dir=\$i"
+else
+excludeopt="\${excludeopt} --exclude=\$i"
+fi
+done
+fi
+yum -y update clamav > /dev/null 2>&1
+freshclam > /dev/null
+clamscan --recursive --remove ${excludeopt} /home >> /home/${USER_NAME}/logs/clamscan/clamscan.log 2>&1
 cd /home/${USER_NAME}/logs/clamscan
 cp clamscan.log clamscan."\$(date +%Y%m%d-%I%M%S).txt"
-chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/clamscan.*.txt
+chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/*
 EOF
 #
-chmod +x /etc/cron.weekly/clamscan
-vim /etc/cron.weekly/clamscan
+chmod 700 /etc/cron.daily/clamscan
+vim /etc/cron.daily/clamscan
 #
 cat <<EOF > /etc/logrotate.d/clamscan
 /home/${USER_NAME}/logs/clamscan/*.log {
@@ -594,19 +622,18 @@ cat <<EOF > /etc/logrotate.d/clamscan
 EOF
 vim /etc/logrotate.d/clamscan
 ## clamd startup
-systemctl enable clamd
-systemctl start clamd
+rm -f /etc/cron.d/clamav-update
 freshclam
 clamscan --infected --remove --recursive
 #
 # clamd.pid Create.
-echo -e "clamd.pid Create.\n"
-echo "d /var/run/clamav 0755 root root -" >> /etc/tmpfiles.d/clamd.conf
-vi /etc/tmpfiles.d/clamd.conf
-systemd-tmpfiles --create clamd.conf
-systemctl daemon-reload
-systemctl restart clamd
-systemctl status clamd
+#echo -e "clamav.pid Create.\n"
+#echo "d /var/run/clamav 0755 root root -" >> /etc/tmpfiles.d/clamav.conf
+#vi /etc/tmpfiles.d/clamav.conf
+#systemd-tmpfiles --create clamav.conf
+#systemctl daemon-reload
+#systemctl restart clamav
+#systemctl status clamav
 #
 fi
 ## ntp.conf Edit

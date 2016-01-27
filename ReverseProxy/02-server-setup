@@ -253,6 +253,9 @@ if [ ${optserverinst04} = "y" ] ; then
 ######################################################################
 echo -e "Nginx Default Setting. \n"
 sed -i "s|^user nginx|user ${WEB_SERVER_SYSTEM_USER_GROUP}|g" /etc/nginx/nginx.conf
+sed -i "s|^worker_processes auto|worker_processes ${NGINX_WORKER_PROCESSES}|g" /etc/nginx.conf
+sed -i "6a\#worker_cpu_affinity ${NGINX_WORKER_CPU_AFFINITY};" /etc/nginx/nginx.conf
+sed -i "7a\#worker_priority ${NGINX_WORKER_PRIORITY};" /etc/nginx/nginx.conf
 sed -i "s|^error_log /var/log/nginx/error.log|error_log ${APACHE_LOG_DIRECTORY}/nginx_error.log|g" /etc/nginx/nginx.conf
 sed -i "s|access_log  /var/log/nginx/access.log  main|access_log  ${APACHE_LOG_DIRECTORY}/nginx_access.log  main|g" /etc/nginx/nginx.conf
 sed -i "s|keepalive_timeout   65|keepalive_timeout   ${NGINX_KEEPALIVE_TIMEOUT}|g" /etc/nginx/nginx.conf
@@ -725,20 +728,28 @@ read websvclamd
 if [ ${websvclamd} = "y" ] ; then
 cat <<EOF > /etc/cron.daily/public
 #!/bin/bash
-yum -y update clamd > /dev/null 2>&1
-/usr/bin/freshclam > /dev/null
-/usr/bin/clamscan -i -r --remove /var/www >> /home/${USER_NAME}/logs/clamscan/clamscan_pub.log 2>&1
+ExcludeDirectory=/etc/.clamav/exclude
+if [ -s \$ExcludeDirectory ]; then
+for i in \`cat \$ExcludeDirectory\`
+do
+if [ \$(echo "\$i"|grep \/$) ]; then
+i=\`echo \$i|sed -e 's/^\([^ ]*\)\/$/\1/p' -e d\`
+excludeopt="\${excludeopt} --exclude-dir=\$i"
+else
+excludeopt="\${excludeopt} --exclude=\$i"
+fi
+done
+fi
+yum -y update clamav > /dev/null 2>&1
+freshclam > /dev/null
+clamscan --recursive --remove ${excludeopt} /var/www >> /home/${USER_NAME}/logs/clamscan/clamscan_pub.log 2>&1
 cd /home/${USER_NAME}/logs/clamscan
 cp clamscan_pub.log clamscan_pub."\$(date +%Y%m%d-%I%M%S).txt"
-chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/clamscan_pub.*.txt
+chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/*
 EOF
 #
-chmod +x /etc/cron.daily/public
+chmod 700 /etc/cron.daily/public
 vim /etc/cron.daily/public
-## clamd startup
-echo -e "clamd restart \n"
-#
-systemctl restart clamd
 fi
 ####
 echo -e "WebServer Setup End. \n"
