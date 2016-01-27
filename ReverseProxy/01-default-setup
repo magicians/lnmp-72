@@ -319,7 +319,7 @@ rpm -ivh ${RepoRemix86}
 #
 vi /etc/yum.repos.d/rpmforge.repo
 ## clamd-0.98.4 and clamav-0.98.7 / Conflict.
-sed -i "8a\exclude=clam*" /etc/yum.repos.d/epel.repo
+sed -i "8a\#exclude=clam*" /etc/yum.repos.d/epel.repo
 vi /etc/yum.repos.d/epel.repo
 vi /etc/yum.repos.d/elrepo.repo
 vi /etc/yum.repos.d/remi.repo
@@ -349,6 +349,8 @@ yum -y groupinstall "Base" "Development tools" "Japanese Support"
 yum -y install yum-cron
 systemctl enable yum-cron
 systemctl start yum-cron
+## yum clean all
+yum clean all
 # etckeeper init
 etckeeper init
 etckeeper commit "VPS Installed First Commit."
@@ -633,12 +635,13 @@ vi /etc/postfix/main.cf
 #
 fi
 ## 再起動
-echo "再起動 [y] / シャットダウン [n] \n"
+#echo -e "再起動 [y] / シャットダウン [n] \n"
+echo -e "再起動 [y] \n"
 read opt_install15
 if [ ${opt_install15} = "y" ] ; then
 reboot
-else
-shutdown -h now
+#else
+#shutdown -h now
 fi
 #
 ############################################################################
