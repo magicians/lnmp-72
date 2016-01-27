@@ -719,6 +719,10 @@ rm -fr ${NGINX_BUILD_PATH}/rpm
 rm -f ${NGINX_BUILD_PATH}/.rpmmacros
 fi
 ## clamd cron setup
+echo -e "clamdのインストールしている場合は [y] \n"
+echo -e "インストールしていない場合は [n] \n"
+read websvclamd
+if [ ${websvclamd} = "y" ] ; then
 cat <<EOF > /etc/cron.daily/public
 #!/bin/bash
 yum -y update clamd > /dev/null 2>&1
@@ -732,4 +736,10 @@ EOF
 chmod +x /etc/cron.daily/public
 vim /etc/cron.daily/public
 ## clamd startup
+echo -e "clamd restart \n"
+#
 systemctl restart clamd
+fi
+####
+echo -e "WebServer Setup End. \n"
+####
