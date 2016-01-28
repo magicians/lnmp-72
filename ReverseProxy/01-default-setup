@@ -622,7 +622,7 @@ yum -y update clamav > /dev/null 2>&1
 freshclam > /dev/null
 clamscan --recursive --remove ${excludeopt} /home >> /home/${USER_NAME}/logs/clamscan/clamscan.log 2>&1
 cd /home/${USER_NAME}/logs/clamscan
-cp clamscan.log clamscan."\$(date +%Y%m%d-%I%M%S).txt"
+mv clamscan.log clamscan."\$(date +%Y%m%d-%I%M%S).txt"
 chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/*
 EOF
 #
