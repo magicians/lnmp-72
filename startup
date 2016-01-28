@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-70 v1.0.0
+#### lnmp-70 v1.0.1
 source ./initfile.txt
 ####
 chmod 600 ${INSTALL_PATH}/initfile.txt
@@ -10,8 +10,9 @@ ln -s ${INSTALL_PATH}/text/cms.txt ${INSTALL_PATH}/cms.txt
 ln -s ${INSTALL_PATH}/text/nginx-build.txt ${INSTALL_PATH}/nginx-build.txt
 chmod 400 ${INSTALL_PATH}/last_optimization
 ##############################################
-#echo -e "LAMP(Linux, Apache, MariaDB, PHP)でインストールしますか？ [y] \n"
-echo -e "LNMP(Linux, Nginx, MariaDB, PHP7.0)でインストールしますか？ [y] \n"
+#echo -e "LAMP(Linux, Apache, MariaDB, PHP)でインストールしますか？ [y]"
+echo -e "Jp: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)？ [y]"
+echo -e "En: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)? [y]"
 read instaltolamp
 ##############################################
 if [ ${instaltolamp} = "y" ] ; then

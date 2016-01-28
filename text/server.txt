@@ -1,4 +1,4 @@
-#### lnmp-70 v1.0.0
+#### lnmp-70 v1.0.1
 ###############################################################################
 ## 2.WebServer Environment Variable.
 ###############################################################################
@@ -165,7 +165,7 @@ NGINX_BACKEND_NAME=backend
 NGINX_BACKEND_DIRECTORY=wp-admin\|wp-login\\.php
 #
 # -- Nginx Backend URI / concrete5
-#NGINX_BACKEND_DIRECTORY=dashboard
+#NGINX_BACKEND_DIRECTORY=login\|dashboard\|install
 #
 # -- Nginx Referers URI
 NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ *\.wordpress\.com

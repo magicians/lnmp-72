@@ -1,44 +1,49 @@
 #!/bin/sh
-#### lnmp-70 v1.0.0
+#### lnmp-70 v1.0.1
 ############################################################################
 source ./initfile.txt
 source ./default.txt
 ############################################################################
 # totem on Malware Infection. / uninstall.
-yum remove -y totem
-#
-echo -e "ローカルセットアップを開始します。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install01
-if [ ${opt_install01} = "y" ] ; then
+yum remove -y totem*
+echo -e "Jp: ローカルセットアップを開始します。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: It will start the local setup. [y] / Already one time when it is passed through the shell [n]"
+read set_localnet
+####
+if [ ${set_localnet} = "y" ] ; then
 #### 接続先を固定する、他からの接続は原則拒否推奨。
-echo "hosts.allow のインストール先はローカルですか？ [y/n]"
-read localhosts
-if [ ${localhosts} = "y" ] ; then
+echo -e "Jp:(/etc/hosts.allow) サーバのインストール先はローカルネットワークですか？ [y/n]"
+echo -e "En:(/etc/hosts.allow) Server installation destination Is the local network? [y/n]"	
+read set_hostsallow
+########
+if [ ${set_hostsallow} = "y" ] ; then
 # ローカル環境での設定
-	echo "sshd: ${LOCAL_IP_HOSTS}" >> /etc/hosts.allow
+echo "sshd: ${LOCAL_IP_HOSTS}" >> /etc/hosts.allow
 else
-	echo "接続は固定IPですか？ [y/n]"
-	read DefIpHosts
-	if [ ${DefIpHosts} = "y" ] ; then
+echo -e "Jp: 接続は固定IPですか？ [y/n]"
+echo -e "En: Is the connection fixed IP? [y/n]"
+read set_connection_ip
+############
+if [ ${set_connection_ip} = "y" ] ; then
 # 固定IPによる接続
-		echo "sshd: ${GLOBAL_IP_ADDR}" >> /etc/hosts.allow
-	else
-# DHCP・プロバイダホストによる接続
-		echo "sshd: ${GLOBAL_ACCESS_HOSTS}" >> /etc/hosts.allow
-	fi
+	echo "sshd: ${GLOBAL_IP_ADDR}" >> /etc/hosts.allow
+else
+	echo "sshd: ${GLOBAL_ACCESS_HOSTS}" >> /etc/hosts.allow
 fi
+############
+fi
+########
 echo "ALL: ALL" >> /etc/hosts.deny
 fi
-#
+####
 ############################################################################
 #### アクセス権限をユーザに付与。
 ############################################################################
 #
-echo -e "アクセス権限をユーザに付与します[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install02
-if [ ${opt_install02} = "y" ] ; then
+echo -e "Jp: アクセス権限をユーザに付与します [y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: It will grant access privileges to users. [y] / Already one time when it is passed through the shell [n]"
+read set_accessuser
+if [ ${set_accessuser} = "y" ] ; then
 sed -i "s|^#auth\t\trequired|auth\t\trequired|" /etc/pam.d/su
 #
 vi /etc/pam.d/su
@@ -49,10 +54,10 @@ fi
 #### SSHの初期設定。
 ############################################################################
 #
-echo -e "SSHの初期設定を開始します。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install03
-if [ ${opt_install03} = "y" ] ; then
+echo -e "Jp: SSHの初期設定を開始します。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: It will start the initial configuration of the SSH. [y] / Already one time when it is passed through the shell [n]"
+read set_sshdconfig
+if [ ${set_sshdconfig} = "y" ] ; then
 ## SSH ポート変更
 sed -i "s|^#Port 22$|Port $SSH_EDIT_PORT|" /etc/ssh/sshd_config
 ## SSH rootでのログインを不可にする
@@ -73,10 +78,10 @@ fi
 #### iptablesセットアップ・シェルスクリプトを作成。
 ############################################################################
 #
-echo -e "iptables-servicesのインストール [y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install04
-if [ ${opt_install04} = "y" ] ; then
+echo -e "Jp: iptables-servicesのインストール [y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: installation of iptables-services [y] / Already one time when it is passed through the shell [n]"
+read set_iptables_serv
+if [ ${set_iptables_serv} = "y" ] ; then
 yum -y install iptables-services
 systemctl stop firewalld
 systemctl disable firewalld
@@ -84,12 +89,12 @@ systemctl start iptables
 systemctl enable iptables
 fi
 # iptablesセットアップ
-echo -e "iptablesセットアップ [y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install05
-if [ ${opt_install05} = "y" ] ; then
+echo -e "Jp: iptablesセットアップ [y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: iptables setup [y] / Already one time when it is passed through the shell [n]"
+read set_iptables_param
+if [ ${set_iptables_param} = "y" ] ; then
 # iptables setup.
-echo -e "iptables setup.\n"
+echo -e "iptables setup."
 cat <<EOF > /home/${USER_NAME}/.iptables_setup
 #!/bin/bash
 
@@ -236,9 +241,10 @@ vi /etc/sysconfig/ip6tables
 #### ユーザディレクトリにiptablesセットアップ・シェルスクリプトを保存。
 ############################################################################
 #
-echo "セットアップ先はグローバル環境ですか？ [y/n]"
-read globaliptable
-if [ ${globaliptable} = "y" ] ; then
+echo -e "Jp: セットアップ先はグローバル環境ですか？ [y/n]"
+echo -e "En: Is the destination is a global environment? [y/n]"
+read set_globaliptables_param
+if [ ${set_globaliptables_param} = "y" ] ; then
 	# グローバル環境では使わない。※ ローカル環境専用
 	sed -i "s|echo \"-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPTABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.iptables_setup
 	sed -i "s|echo \"-A INPUT -d ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPTABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.iptables_setup
@@ -258,19 +264,21 @@ ss -lt
 #
 ############################################################################
 ## SELINUXの変更。SakuraVPSでは既に disabled されているのでデフォルトで n を選択して下さい。
-echo -e "SELINUXの変更を開始します。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install06
-if [ ${opt_install06} = "y" ] ; then
+echo -e "Jp: SELINUXの変更を開始します。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: It will initiate a change of SELINUX. [y] / Already one time when it is passed through the shell [n]"
+read set_selinux_config
+if [ ${set_selinux_config} = "y" ] ; then
 getenforce
-echo "インストール先でSELINUXは有効化されてましたか？ [y/n] : さくらのVPSなら='n'"
-read selinuxenforcing
-if [ ${selinuxenforcing} = "y" ] ; then
+echo -e "Jp: インストール先でSELINUXは有効化されてましたか？ [y/n] : さくらのVPSなら: 'n'"
+echo -e "En: Or SELINUX had been enabled on the installation? [y/n] : You can easily find Sakura VPS: 'n'"
+read set_selinuxenforcing
+if [ ${set_selinuxenforcing} = "y" ] ; then
 	setenforce 0
 	getenforce
-echo "SELINUXを完全に無効化しますか？ [y/n]"
-read selinuxdisabled
-if [ ${selinuxdisabled} = "y" ] ; then
+echo -e "Jp: SELINUXを完全に無効化しますか？ [y/n]"
+echo -e "En: Are you sure you want to completely disable the SELINUX? [y/n]"
+read set_selinuxdisabled
+if [ ${set_selinuxdisabled} = "y" ] ; then
 	sed -i 's|^SELINUX=enforcing$|SELINUX=disabled|g' /etc/selinux/config
 else
 	sed -i 's|^SELINUX=enforcing$|SELINUX=permissive|g' /etc/selinux/config
@@ -294,12 +302,13 @@ fi
 #### リポジトリの追加。
 ############################################################################
 #
-echo -e "CentOS7専用のリポジトリを追加します。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install07
-if [ ${opt_install07} = "y" ] ; then
+echo -e "Jp: CentOS7のリポジトリを追加します。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: It'll add the CentOS7 repository. [y] / Already one time when it is passed through the shell [n]"
+read set_centos7_repository
+if [ ${set_centos7_repository} = "y" ] ; then
 ## Rpmforge Repository
-echo -e "CentOS7専用のリポジトリを追加します。"
+echo -e "Jp: CentOS7のリポジトリを追加します。"
+echo -e "En: It'll add the CentOS7 repository."
 rpm --import ${RepoRPMForgeGPG}
 rpm -ivh ${RepoRPMForgex86}
 #
@@ -317,9 +326,10 @@ rpm -ivh ${RepoRemix86}
 #
 ############################################################################
 #
+sed -i "11a\exclude=clam*" /etc/yum.repos.d/rpmforge.repo
 vi /etc/yum.repos.d/rpmforge.repo
 ## clamd-0.98.4 and clamav-0.98.7 / Conflict.
-sed -i "8a\#exclude=clam*" /etc/yum.repos.d/epel.repo
+#sed -i "8a\#exclude=clam*" /etc/yum.repos.d/epel.repo
 vi /etc/yum.repos.d/epel.repo
 vi /etc/yum.repos.d/elrepo.repo
 vi /etc/yum.repos.d/remi.repo
@@ -332,10 +342,10 @@ fi
 #### yumアップデート、グループインストール、yum-cronのインストール。
 ############################################################################
 #
-echo -e "yumアップデート、グループインストール、yum-cronのインストールを開始します。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install08
-if [ ${opt_install08} = "y" ] ; then
+echo -e "Jp: yumアップデート、グループインストール、yum-cronのインストールを開始します。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: yum update, group installation, you will start the installation of the yum-cron. [y] / Already one time when it is passed through the shell [n]"
+read set_yum_update
+if [ ${set_yum_update} = "y" ] ; then
 yum -y update
 yum -y install git mercurial etckeeper
 touch /etc/.gitignore
@@ -347,6 +357,8 @@ yum -y groupinstall "Base" "Development tools" "Japanese Support"
 #
 ## yum-cron install
 yum -y install yum-cron
+sudo sed -i "s|^apply_updates = no$|apply_updates = yes|g" /etc/yum/yum-cron.conf
+vim /etc/yum/yum-cron.conf
 systemctl enable yum-cron
 systemctl start yum-cron
 ## yum clean all
@@ -356,11 +368,17 @@ etckeeper init
 etckeeper commit "VPS Installed First Commit."
 #
 fi
+# CentOS7.2 Error Log
+sed -i "s|authpriv.*|#\0|g" /etc/rsyslog.conf
+sed -i "57a\authpriv.notice                                          /var/log/secure" /etc/rsyslog.conf
+vim /etc/rsyslog.conf
+#
 ############################################################################
 #### denyhosts install. Denyhosts の追加。
 ############################################################################
 #
-echo -e "denyhostsのインストールを開始します。\n"
+echo -e "Jp: denyhostsのインストールを開始します。"
+echo -e "En: It will start the installation of denyhosts."
 yum -y install denyhosts
 #
 ############################################################################
@@ -371,17 +389,18 @@ systemctl start denyhosts
 ############################################################################
 #### Password Expect Install. 後に設定するパスワードを生成。事前にDLしておく。
 ############################################################################
-echo -e "expectのインストールを開始します。\n"
+echo -e "Jp: expectのインストールを開始します。"
+echo -e "En: It will start the installation of expect."
 yum -y install expect
 ############################################################################
 ############################################################################
 #### ユーザディレクトリにスキャンログを保存する。
 ############################################################################
 #
-echo -e "ユーザディレクトリにスキャンログディレクトリを作成。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install10
-if [ ${opt_install10} = "y" ] ; then
+echo -e "Jp: ユーザディレクトリにスキャンログディレクトリを作成。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: Create a scan log directory to the user directory. [y] / Already one time when it is passed through the shell [n]"
+read set_user_logs
+if [ ${set_user_logs} = "y" ] ; then
 mkdir -p /home/${USER_NAME}/logs/clamscan
 chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/*
 chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs
@@ -391,10 +410,10 @@ fi
 #### 管理者用メールを設定する。ログ管理ソフトウェアも追加。
 ############################################################################
 #
-echo -e "管理者用メールを設定する。ログ管理ソフトウェアも追加。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install11
-if [ ${opt_install11} = "y" ] ; then
+echo -e "Jp: 管理者用メールを設定する。ログ管理ソフトウェアも追加。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: It sets up a mail for the administrator. Additional log management software. [y] / Already one time when it is passed through the shell [n]"
+read set_logwatch_inst
+if [ ${set_logwatch_inst} = "y" ] ; then
 sed -i '/^root:/d' /etc/aliases
 echo "root:     ${ALIASES_ROOT_MAIL_ADDR}" >> /etc/aliases
 vi /etc/aliases
@@ -407,10 +426,10 @@ fi
 #### rkhunter install. 先に入れた物より比較的更新頻度が高いチェッカーを追加する。
 ############################################################################
 #
-echo -e "rkhunterのインストール。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install12
-if [ ${opt_install12} = "y" ] ; then
+echo -e "Jp: rkhunterのインストール。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: installation of rkhunter. [y] / Already one time when it is passed through the shell [n]"
+read set_rkhunter_inst
+if [ ${set_rkhunter_inst} = "y" ] ; then
 yum -y install rkhunter
 rkhunter --update
 mkdir /etc/.clamav
@@ -438,11 +457,11 @@ fi
 #### tripwire install. 改竄チェック
 ############################################################################
 #
-echo -e "tripwireのインストール。[y] \n"
-echo -e "既に一回このシェルを通している場合/必要無い場合 [n] \n"
+echo -e "Jp: tripwireのインストール。[y] / 既に一回このシェルを通している場合/必要無い場合 [n]"
+echo -e "En: installation of tripwire. [y] / Already one time when it is passed through the shell [n]"
 ####
-read opt_trip_install
-if [ ${opt_trip_install} = "y" ] ; then
+read set_tripwire_inst
+if [ ${set_tripwire_inst} = "y" ] ; then
 yum -y install tripwire
 tripwire-setup-keyfiles
 sed -i 's/^LOOSEDIRECTORYCHECKING\s\+=false$/LOOSEDIRECTORYCHECKING =true/' /etc/tripwire/twcfg.txt
@@ -551,7 +570,7 @@ rm -f twpol.txt* *.bak
 rm -f /usr/local/tripwire/lib/tripwire/*.twd*
 tripwire -m i -s -c tw.cfg -P \$LOCALPASS
 EOF
-## /home/${UserName}/tw/*.txt
+####
 vim /etc/cron.daily/tripwire.sh
 chmod 700 /etc/cron.daily/tripwire.sh
 ####
@@ -561,10 +580,10 @@ fi
 #### clamd install. VirusScanを追加。
 ############################################################################
 #
-echo -e "clamavのインストール。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install13
-if [ ${opt_install13} = "y" ] ; then
+echo -e "Jp: clamavのインストール。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: installation of clamav. [y] / Already one time when it is passed through the shell [n]"
+read set_clamav_inst
+if [ ${set_clamav_inst} = "y" ] ; then
 yum install clamav clamav-update
 # Freshclam Setup
 sed -i "s|^Example|#\0|g" /etc/freshclam.conf
@@ -609,45 +628,22 @@ EOF
 #
 chmod 700 /etc/cron.daily/clamscan
 vim /etc/cron.daily/clamscan
-#
-cat <<EOF > /etc/logrotate.d/clamscan
-/home/${USER_NAME}/logs/clamscan/*.log {
-    missingok
-    notifempty
-    create 644 ${USER_NAME} ${USER_NAME}
-    postrotate
-        killall -HUP clamd 2>/dev/null || :
-    endscript
-}
-EOF
-vim /etc/logrotate.d/clamscan
 ## clamd startup
 rm -f /etc/cron.d/clamav-update
 freshclam
 clamscan --infected --remove --recursive
 #
-# clamd.pid Create.
-#echo -e "clamav.pid Create.\n"
-#echo "d /var/run/clamav 0755 root root -" >> /etc/tmpfiles.d/clamav.conf
-#vi /etc/tmpfiles.d/clamav.conf
-#systemd-tmpfiles --create clamav.conf
-#systemctl daemon-reload
-#systemctl restart clamav
-#systemctl status clamav
-#
 fi
 ## ntp.conf Edit
 systemctl stop ntpd
 systemctl disable ntpd
-#echo "disable monitor" >> /etc/ntp.conf
-#vi /etc/ntp.conf
 #
 ## sysctl Edit IPv6の無効化及び、PostfixをIPv4のみ設定にする。
 #
-echo -e "sysctlのセットアップ。[y] \n"
-echo -e "既に一回このシェルを通している場合は [n] \n"
-read opt_install14
-if [ ${opt_install14} = "y" ] ; then
+echo -e "Jp: sysctlのセットアップ。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: sysctl setup. [y] / Already one time when it is passed through the shell [n]"
+read set_sysctl_setup
+if [ ${set_sysctl_setup} = "y" ] ; then
 echo "net.ipv4.icmp_echo_ignore_broadcasts = 1" >> /etc/sysctl.conf
 echo "net.ipv4.icmp_echo_ignore_all = 1" >> /etc/sysctl.conf
 echo "net.ipv4.icmp_ignore_bogus_error_responses = 1" >> /etc/sysctl.conf
@@ -662,15 +658,11 @@ vi /etc/postfix/main.cf
 #
 fi
 ## 再起動
-#echo -e "再起動 [y] / シャットダウン [n] \n"
-echo -e "再起動 [y] \n"
-read opt_install15
-if [ ${opt_install15} = "y" ] ; then
+echo -e "Jp: 再起動しますか？ [y]"
+echo -e "En: Do you want to restart? [y]"
+read set_systemrestart
+if [ ${set_systemrestart} = "y" ] ; then
 reboot
-#else
-#shutdown -h now
 fi
 #
-############################################################################
-## 最低限のセットアップは以上です。以降、必要があればWebサーバを追加してください。
 ############################################################################

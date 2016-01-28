@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-70 v1.0.0
+#### lnmp-70 v1.0.1
 ############################################################################
 source ./initfile.txt
 source ./default.txt
@@ -17,9 +17,9 @@ mysql -u root -p${DB_ROOT_PASSWD}
 ####
 clear
 ############################################################################
-echo -e "CMS Install for WordPress [y] / concrete5 [n] \n"
-read SELECTCMSINSTALL
-if [ ${SELECTCMSINSTALL} = "y" ] ; then
+echo -e "CMS Install for WordPress [y] / concrete5 [n]"
+read set_cms_wpinstall
+if [ ${set_cms_wpinstall} = "y" ] ; then
 clear
 echo "WordPress-$WP_VERSION install start."
 ## Install File Download.
@@ -46,16 +46,19 @@ sed -i "84a\define('FORCE_SSL_ADMIN', true);" ${APACHE_FILE_DIRECTORY}/${WP_CONF
 sed -i "s|\r||g" ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 vim ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-config.php
 clear
-echo -e "以下のプラグインを追加しますか？\n"
-echo -e "( JetPack, CrazyBone, EditAuthorSlug, NginxCacheController, WP-SiteManager ) \n"
-echo -e "必要と思えるプラグインだけ選択して下さい。 [y/n] \n"
+echo -e "Jp: 以下のプラグインを追加しますか？"
+echo -e "Jp: 必要と思えるプラグインだけ選択して下さい。 [y/n]"
+echo -e "En: Do you want to add the following plug-ins?"
+echo -e "En: Choose only plug-ins that seems necessary. [y/n]"
+echo -e "( JetPack, CrazyBone, EditAuthorSlug, NginxCacheController, WP-SiteManager )"
 read setpluginsinstalls
 if [ ${setpluginsinstalls} = "y" ] ; then
 ## -- WP Plugins install.
 cd ${APACHE_FILE_DIRECTORY}/${WP_CONF_DIR}/wp-content/plugins/
 clear
 # JetPack
-echo -e "JetPack をインストールしますか？ [y/n] \n"
+echo -e "Jp: JetPack をインストールしますか？ [y/n]"
+echo -e "En: Do you want to install JetPack? [y/n]"
 read setjetpackinstall
 if [ ${setjetpackinstall} = "y" ] ; then
 curl -O https://downloads.wordpress.org/plugin/jetpack.3.9.1.zip
@@ -63,7 +66,8 @@ unzip jetpack.3.9.1.zip
 fi
 clear
 # CrazyBone
-echo -e "CrazyBone をインストールしますか？ [y/n] \n"
+echo -e "Jp: CrazyBone をインストールしますか？ [y/n]"
+echo -e "En: Do you want to install CrazyBone? [y/n]"
 read setcrazyboneinstall
 if [ ${setcrazyboneinstall} = "y" ] ; then
 curl -O https://downloads.wordpress.org/plugin/crazy-bone.0.6.0.zip
@@ -71,7 +75,8 @@ unzip crazy-bone.0.6.0.zip
 fi
 clear
 # Edit Author Slug
-echo -e "EditAuthorSlug をインストールしますか？ [y/n] \n"
+echo -e "Jp: EditAuthorSlug をインストールしますか？ [y/n]"
+echo -e "En: Do you want to install EditAuthorSlug? [y/n]"
 read seteasinstall
 if [ ${seteasinstall} = "y" ] ; then
 curl -O https://downloads.wordpress.org/plugin/edit-author-slug.1.1.2.zip
@@ -79,7 +84,8 @@ unzip edit-author-slug.1.1.2.zip
 fi
 clear
 # Nginx Cache Controller
-echo -e "NginxCacheController をインストールしますか？ [y/n] \n"
+echo -e "Jp: NginxCacheController をインストールしますか？ [y/n]"
+echo -e "En: Do you want to install NginxCacheController? [y/n]"
 read setnccinstall
 if [ ${setnccinstall} = "y" ] ; then
 curl -O https://downloads.wordpress.org/plugin/nginx-champuru.3.1.1.zip
@@ -87,7 +93,8 @@ unzip nginx-champuru.3.1.1.zip
 fi
 clear
 # WP-SiteManager
-echo -e "WP-SiteManager をインストールしますか？ [y/n] \n"
+echo -e "Jp: WP-SiteManager をインストールしますか？ [y/n]"
+echo -e "En: Do you want to install WP-SiteManager? [y/n]"
 read setwpsminstall
 if [ ${setwpsminstall} = "y" ] ; then
 curl -O https://downloads.wordpress.org/plugin/wp-sitemanager.1.1.8.zip
@@ -117,7 +124,8 @@ fi
 #####################################
 clear
 /usr/sbin/nginx -t
-echo "Webサーバを再起動しますか？ [y/n]"
+echo -e "Jp: Webサーバを再起動しますか？ [y/n]"
+echo -e "En: Do you want to restart the Web server? [y/n]"
 read WP_WEBSERVER_RESTART
 #####################################
 if [ ${WP_WEBSERVER_RESTART} = "y" ]; then
@@ -128,9 +136,12 @@ systemctl restart mariadb
 fi
 #####################################
 clear
-echo "選択したCMSのインストールに関する事前準備は完了しました。"
-echo "ブラウザを起動して引き続きインストール作業を行ってください。"
-echo "その後 last_optimization を実行し、ファイルのチェックを行ってください。"
+echo -e "Jp: 選択したCMSのインストールに関する事前準備は完了しました。"
+echo -e "Jp: ブラウザを起動して引き続きインストール作業を行ってください。"
+echo -e "Jp: その後 last_optimization を実行し、ファイルのチェックを行ってください。"
+echo -e "En: Advance preparation on the installation of the selected CMS was completed."
+echo -e "En: Please continue to perform the installation work by starting the browser."
+echo -e "En: Then run the last_optimization, please do check of files."
 #### Adminer Install.
 #https://www.adminer.org/static/download/4.2.3/adminer-4.2.3.php
 # Adminer Pluginでも可。

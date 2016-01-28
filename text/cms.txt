@@ -1,4 +1,4 @@
-#### lnmp-70 v1.0.0
+#### lnmp-70 v1.0.1
 ###############################################################################
 ## 2-7. MariaDB Setup Config.
 ###############################################################################
@@ -39,7 +39,7 @@ WP_DB_PREFIX=wp_
 # -- Install Host
 C5_SCHEMA=${NGINX_SCHEMA}
 # -- concrete5 Version
-C5_VERSION=concrete5.7.5.5
+C5_VERSION=concrete5.7.5.6
 # -- concrete5 Download URL
-C5_DL_URL=http://www.concrete5.org/download_file/-/view/85712/
+C5_DL_URL=http://www.concrete5.org/download_file/-/view/85780/
 ###############################################################################

@@ -1,14 +1,14 @@
 #!/bin/bash
-#### lnmp-70 v1.0.0
+#### lnmp-70 v1.0.1
 ############################################################################
 source ./initfile.txt
 source ./default.txt
 source ./server.txt
 ############################################################################
-echo -e "WebServer(Nginx)をインストールします。[y] \n"
-echo -e "シェルを通している場合は [n] \n"
-read optserverinst01
-if [ ${optserverinst01} = "y" ] ; then
+echo -e "Jp: WebServer(Nginx)をインストールします。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: It will install the WebServer (Nginx). [y] / Already one time when it is passed through the shell [n]"
+read set_webserver_inst
+if [ ${set_webserver_inst} = "y" ] ; then
 # CentOS7 httpd normal install.
 yum -y install pcre-devel \
 zlib-devel \
@@ -22,14 +22,18 @@ httpd-devel \
 httpd \
 mod_ssl
 clear
-echo -e "ここで一度、別のターミナルを立ち上げてください。\n"
-echo -e "ユーザ権限でSSHログインし NS04_5-NGXBUILD.sh を実行して Nginx をビルドして下さい。\n"
+echo -e "Jp: ここで一度、別のターミナルを立ち上げてください。"
+echo -e "Jp: ユーザ権限でSSHログインし NGXBUILD.sh を実行して Nginx をビルドして下さい。"
+echo -e "En: Here once, please launch another terminal."
+echo -e "En: Build your Nginx by running the SSH login NGXBUILD.sh in user permissions."
 #### PHP Install.
-echo -e "PHP7.x をインストールする場合は [y] / PHP5.6 をインストールする場合は [n] \n"
+echo -e "Jp: PHP7.x をインストールする場合は [y] / PHP5.6 をインストールする場合は [n]"
+echo -e "En: If you want to install PHP7.x [y] / If you want to install the PHP5.6 [n]"
 read DEFPHPINST_70_56
 if [ ${DEFPHPINST_70_56} = "y" ] ; then
-echo -e "PHP7.x をインストールします。\n"
-yum --enablerepo=remi --enablerepo=remi-php70 install php \
+echo -e "Jp: PHP7.x をインストールします"
+echo -e "En: It will install the PHP7.x"
+yum --enablerepo=remi,remi-php70 install php \
 php-cli \
 php-devel \
 php-mbstring \
@@ -44,8 +48,9 @@ mariadb \
 mariadb-server \
 php-fpm
 else
-echo -e "PHP5.6 をインストールします。\n"
-yum --enablerepo=remi --enablerepo=remi-php56 install php \
+echo -e "Jp: PHP5.6 をインストールします"
+echo -e "En: It will install the PHP5.6"
+yum --enablerepo=remi,remi-php56 install php \
 php-cli \
 php-devel \
 php-mbstring \
@@ -63,10 +68,11 @@ fi
 ####
 fi
 clear
-echo -e "PHP-FPMをセットアップします。\n"
+echo -e "Jp: PHP-FPMをセットアップします。"
+echo -e "En: It will set up the PHP-FPM."
 cp /etc/php-fpm.d/www.conf /etc/php-fpm.d/www_conf.origin
 vim /etc/php-fpm.d/www.conf
-echo -e "PHP-FPM Edit. \n"
+echo -e "PHP-FPM Edit."
 sed -i 's|^listen = 127.0.0.1:9000|listen = /var/run/php-fpm/www.sock|g' /etc/php-fpm.d/www.conf
 sed -i 's|^listen.allowed_clients = 127.0.0.1|;\0|' /etc/php-fpm.d/www.conf
 sed -i "s|^;listen.owner = nobody|listen.owner = ${WEB_SERVER_SYSTEM_USER_GROUP}|g" /etc/php-fpm.d/www.conf
@@ -80,7 +86,8 @@ sed -i "s|^;pm.max_requests = 500|pm.max_requests = 500|g" /etc/php-fpm.d/www.co
 vim /etc/php-fpm.d/www.conf
 # PHP.ini Edit
 #
-echo -e "PHP.iniを編集します。\n"
+echo -e "Jp: PHP.iniを編集します。"
+echo -e "En: You will edit the PHP.ini."
 sed -i "s|^memory_limit = 128M|memory_limit = ${PHP_MEM_LIMIT}|g" /etc/php.ini
 sed -i "s|^post_max_size = 8M|post_max_size = ${PHP_POST_MAX}|g" /etc/php.ini
 sed -i "s|^upload_max_filesize = 2M|upload_max_filesize = ${PHP_UPLOAD_MAX}|g" /etc/php.ini
@@ -91,14 +98,14 @@ sed -i "s|^session.cookie_domain =|;\0|g" /etc/php.ini
 vim /etc/php.ini
 ####
 clear
-echo -e "Apacheをセットアップします。[y] \n"
-echo -e "シェルを通している場合は [n] \n"
+echo -e "Jp: Apacheをセットアップします。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: You set up the Apache. [y] / Already one time when it is passed through the shell [n]"
 read optserverinst02
 if [ ${optserverinst02} = "y" ] ; then
 #########################################
-echo -e "Apache Backend Setup. \n"
+echo -e "Apache Backend Setup."
 # httpd.conf Edit.
-echo -e "httpd.conf Edit. \n"
+echo -e "httpd.conf Edit."
 sed -i "s|^Listen 80$|Listen ${BACKEND_LISTEN_PORT}|g" ${APACHE_BASE_CONFIG_DIRECTORY}/httpd.conf
 sed -i 's|Options Indexes FollowSymLinks$|Options -Indexes +FollowSymLinks|g' ${APACHE_BASE_CONFIG_DIRECTORY}/httpd.conf
 sed -i "s|^ErrorLog \"logs/error_log\"$|ErrorLog \"${APACHE_LOG_DIRECTORY}/httpd_error_log\"|g" ${APACHE_BASE_CONFIG_DIRECTORY}/httpd.conf
@@ -111,7 +118,7 @@ echo "ServerSignature Off" >> ${APACHE_BASE_CONFIG_DIRECTORY}/httpd.conf
 vim ${APACHE_BASE_CONFIG_DIRECTORY}/httpd.conf
 #
 # 00-base.conf Edit.
-echo -e "00-base.conf Edit. \n"
+echo -e "00-base.conf Edit."
 sed -i 's|^LoadModule authn_anon_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-base.conf
 sed -i 's|^LoadModule authn_dbm_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-base.conf
 sed -i 's|^LoadModule authz_owner_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-base.conf
@@ -122,14 +129,14 @@ sed -i 's|^LoadModule cache_disk_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-
 vim ${APACHE_MOD_CONFIG_DIRECTORY}/00-base.conf
 #
 # 00-dev.conf Edit.
-echo -e "00-dev.conf Edit. \n"
+echo -e "00-dev.conf Edit."
 sed -i 's|^LoadModule dav_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-dav.conf
 sed -i 's|^LoadModule dav_fs_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-dav.conf
 sed -i 's|^LoadModule dav_lock_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-dav.conf
 vim ${APACHE_MOD_CONFIG_DIRECTORY}/00-dav.conf
 #
 # 00-proxy.conf Edit.
-echo -e "00-proxy.conf Edit. \n"
+echo -e "00-proxy.conf Edit."
 sed -i 's|^LoadModule lbmethod_bybusyness_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
 sed -i 's|^LoadModule lbmethod_byrequests_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
 sed -i 's|^LoadModule lbmethod_bytraffic_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
@@ -147,7 +154,7 @@ sed -i 's|^LoadModule proxy_wstunnel_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}
 vim ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
 #
 # extract_forwarded Buile.
-echo -e "extract_forwarded Build. \n"
+echo -e "extract_forwarded Build."
 cd /usr/local/src
 git clone ${APACHE_MOD_EXTRACT_FORWARDED} extract_forwarded
 cd /usr/local/src/extract_forwarded
@@ -156,7 +163,7 @@ cd /usr/local/src/
 rm -rf extract_forwarded
 #
 # 99-nginx.conf Create.
-echo -e "99-nginx.conf Create. \n"
+echo -e "99-nginx.conf Create."
 cat <<EOF > ${APACHE_MOD_CONFIG_DIRECTORY}/99-nginx.conf
 # Proxy Mod Conflict
 LoadModule extract_forwarded_module modules/mod_extract_forwarded.so
@@ -169,12 +176,12 @@ EOF
 vim ${APACHE_MOD_CONFIG_DIRECTORY}/99-nginx.conf
 #
 # extract_forwarded Comment Out.
-echo -e "extract_forwarded Comment Out. \n"
+echo -e "extract_forwarded Comment Out."
 sed -i 's|^LoadModule extract_forwarded_module /usr/lib64/httpd/modules/mod_extract_forwarded.so$|#\0|g' ${APACHE_BASE_CONFIG_DIRECTORY}/httpd.conf
 vim ${APACHE_BASE_CONFIG_DIRECTORY}/httpd.conf
 #
 # welcome.conf Edit.
-echo -e "welcome.conf Edit. \n"
+echo -e "welcome.conf Edit."
 sed -i 's|^<LocationMatch|#\0|' ${APACHE_CONFIG_DIRECTORY}/welcome.conf
 sed -i 's|^    Options -Indexes|#\0|' ${APACHE_CONFIG_DIRECTORY}/welcome.conf
 sed -i 's|^    ErrorDocument|#\0|' ${APACHE_CONFIG_DIRECTORY}/welcome.conf
@@ -193,7 +200,7 @@ mkdir -p /var/www/{html,logs,error,icons,cgi-bin}
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/www/{html,logs,error,icons,cgi-bin}
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/session
 # Create domain.conf
-echo -e "${CONFIG_HOST_DOMAIN}.conf Create. \n"
+echo -e "${CONFIG_HOST_DOMAIN}.conf Create."
 cat <<EOF > ${APACHE_CONFIG_DIRECTORY}/${CONFIG_HOST_DOMAIN}.conf
 # DocumentRoot
 <VirtualHost ${BACKEND_SERVER_PORT}>
@@ -213,7 +220,7 @@ mv ${APACHE_CONFIG_DIRECTORY}/ssl.conf ${APACHE_CONFIG_DIRECTORY}/ssl_conf
 ######################################################################
 # GeoIP DB Directory
 ######################################################################
-echo -e "GeoIP DB Directory Setup. \n"
+echo -e "GeoIP DB Directory Setup."
 #
 cd ${GEOIP_PATH}
 # GeoIP.dat mv GeoIP.dat.YYYYmmdd-IMS.bak
@@ -244,14 +251,14 @@ chmod +x /etc/cron.weekly/GeoIP
 ####
 fi
 ######################################################################
-echo -e "Nginxをセットアップします。[y] \n"
-echo -e "シェルを通している場合は [n] \n"
-read optserverinst04
-if [ ${optserverinst04} = "y" ] ; then
+echo -e "Jp: Nginxをセットアップします。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: You set up the Nginx. [y] / Already one time when it is passed through the shell [n]"
+read set_nginx_setup
+if [ ${set_nginx_setup} = "y" ] ; then
 ######################################################################
 # Default Setting.
 ######################################################################
-echo -e "Nginx Default Setting. \n"
+echo -e "Nginx Default Setting."
 sed -i "s|^user nginx|user ${WEB_SERVER_SYSTEM_USER_GROUP}|g" /etc/nginx/nginx.conf
 sed -i "s|^worker_processes auto|worker_processes ${NGINX_WORKER_PROCESSES}|g" /etc/nginx.conf
 sed -i "6a\#worker_cpu_affinity ${NGINX_WORKER_CPU_AFFINITY};" /etc/nginx/nginx.conf
@@ -263,7 +270,7 @@ sed -i "20a\    server_tokens       off;" /etc/nginx/nginx.conf
 sed -i "34a\    index ${NGINX_INDEX_FILE_LIST};" /etc/nginx/nginx.conf
 vim /etc/nginx/nginx.conf
 # Default GZIP Setting.
-echo -e "00. Default GZIP Setting. \n"
+echo -e "00. Default GZIP Setting."
 cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/00-gzip.conf
     gzip                    on;
     gzip_static             on;
@@ -279,7 +286,7 @@ EOF
 vim ${NGINX_CONFIG_DIRECTORY}/00-gzip.conf
 #
 # GeoIP Setting.
-echo -e "01 GeoIP Setting. \n"
+echo -e "01 GeoIP Setting."
 cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/01-GeoIP.conf
 ########################################################################
 # GeoIP License
@@ -295,7 +302,7 @@ EOF
 vim ${NGINX_CONFIG_DIRECTORY}/01-GeoIP.conf
 #
 # Default Proxy Setting.
-echo -e "02 Default Proxy Setting. \n"
+echo -e "02 Default Proxy Setting."
 cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/02-proxy.conf
     # REVERSE PROXY SETUP
     # proxy_redirect        off;
@@ -317,7 +324,7 @@ EOF
 vim ${NGINX_CONFIG_DIRECTORY}/02-proxy.conf
 #
 # Default Backend Setting.
-echo -e "03 Default Backend Setting. \n"
+echo -e "03 Default Backend Setting."
 cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
     #default upstream setup.
     upstream ${CONFIG_HOST_DOMAIN}.${NGINX_BACKEND_NAME} {
@@ -329,7 +336,7 @@ cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
 EOF
 vim ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
 ####
-echo -e "04 Header Secure Setup. \n"
+echo -e "04 Header Secure Setup."
 cat <<EOF > /etc/nginx/conf.d/04-header.conf
 # Header Secure Setup
 add_header X-Frame-Options ${NGINX_HEADER_X_FRAME_OPT};
@@ -339,7 +346,7 @@ add_header Content-Security-Policy "${NGINX_HEADER_CONTENT_SP}";
 EOF
 vim /etc/nginx/conf.d/04-header.conf
 ####
-echo -e "05 Header Buffer Setup. \n"
+echo -e "05 Header Buffer Setup."
 cat <<EOF > /etc/nginx/conf.d/05-buffer.conf
 client_body_buffer_size ${NGINX_CLIENT_BODY};
 client_header_buffer_size ${NGINX_CLIENT_HEAD};
@@ -349,11 +356,11 @@ EOF
 vim /etc/nginx/conf.d/05-buffer.conf
 ####
 clear
-echo -e "Nginx PHP-FPM Setup. \n"
+echo -e "Nginx PHP-FPM Setup."
 cat <<EOF > /etc/nginx/php_fpmd
 # PHP-FPM SSL Setting.
 #
-    location ~ \.php(\$\|/) {
+    location ~ \.php(\$|/) {
         # concrete5 is Comment out.
         try_files           \$uri =404;
         # concrete5 is Comment out.
@@ -373,15 +380,15 @@ vim /etc/nginx/php_fpmd
 # SSL Setting Start.
 ######################################################################
 #
-echo -e "Nginx: ${CONFIG_HOST_DOMAIN} / SSL Setup \n"
+echo -e "Nginx: ${CONFIG_HOST_DOMAIN} / SSL Setup"
 # DH PARAM
-echo -e "DH PARAM SETUP. \n"
+echo -e "DH PARAM SETUP."
 openssl dhparam -out ${FRONT_SSL_DH} ${FRONT_SSL_BIT}
 chown nginx ${FRONT_SSL_DH}
 chmod 700 ${FRONT_SSL_DH}
 clear
 ####
-echo -e "SSL PARAM SETUP. \n"
+echo -e "SSL PARAM SETUP."
 cat <<EOF > /etc/nginx/https_param
     ssl on;
     ssl_certificate         ${FRONT_SSL_CERT};
@@ -419,7 +426,7 @@ EOF
 vim ${NGINX_CONFIG_DIRECTORY}/06-httpv2.conf
 fi
 # HTTP/2.0
-echo -e "HTTP/2.0 PARAM SETUP. \n"
+echo -e "HTTP/2.0 PARAM SETUP."
 cat <<EOF> /etc/nginx/httpv2_param
     http2_max_concurrent_streams 128;
     http2_recv_timeout 30s;
@@ -428,7 +435,7 @@ cat <<EOF> /etc/nginx/httpv2_param
 EOF
 vim /etc/nginx/httpv2_param
 # SPDY/3.1
-echo -e "SPDY PARAM SETUP. \n"
+echo -e "SPDY PARAM SETUP."
 cat <<EOF> /etc/nginx/spdy_param
     spdy_chunk_size             8k;
     spdy_headers_comp           9;
@@ -436,7 +443,7 @@ EOF
 vim /etc/nginx/spdy_param
 #
 # WordPress
-echo -e "WordPress PARAM SETUP. \n"
+echo -e "WordPress PARAM SETUP."
 cat <<EOF> /etc/nginx/wp_permalink
     location ~ / {
         # static files
@@ -453,7 +460,7 @@ EOF
 vim /etc/nginx/wp_permalink
 #
 # concrete5
-echo -e "concrete5 PARAM SETUP. \n"
+echo -e "concrete5 PARAM SETUP."
 cat <<EOF> /etc/nginx/c5_permalink
     location ~ / {
         if (!-e \$request_filename) {
@@ -464,7 +471,7 @@ EOF
 vim /etc/nginx/c5_permalink
 #
 ####
-echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP. \n"
+echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP."
 cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
 server {
     # HTTP/2.0
@@ -540,7 +547,7 @@ server {
             set \$do_not_cache   1;
         }
         # concrete5
-        #if ($http_cookie ~* "CONCRETE5|CONCRETE5_INSTALL_TEST|dashboardPanelStatus" ) {
+        #if (\$http_cookie ~* "CONCRETE5|CONCRETE5_INSTALL_TEST|dashboardPanelStatus" ) {
         # WordPress
         if (\$http_cookie ~* "comment_author_|wordpress_(?!test_cookie)|wp-postpass_" ) {
             set \$do_not_cache   1;
@@ -632,7 +639,7 @@ vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}-ssl.conf
 # SSL Setting End.
 ######################################################################
 #
-echo -e "Rewrite Config.\n"
+echo -e "Rewrite Config."
 cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rewrite.conf
 server {
     listen      80;
@@ -681,10 +688,10 @@ vim ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rewrite.conf
 /usr/sbin/nginx -t
 fi
 #########################################
-echo -e "Logrotate and Databaseをセットアップします。[y] \n"
-echo -e "シェルを通している場合は [n] \n"
-read optserverinst05
-if [ ${optserverinst05} = "y" ] ; then
+echo -e "Jp: Logrotate and Databaseをセットアップします。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: You set up the Logrotate and Database. [y] / Already one time when it is passed through the shell [n]"
+read set_db_and_logrotate
+if [ ${set_db_and_logrotate} = "y" ] ; then
 #########################################
 ####
 echo "Logrotate Setup."
@@ -722,8 +729,8 @@ rm -fr ${NGINX_BUILD_PATH}/rpm
 rm -f ${NGINX_BUILD_PATH}/.rpmmacros
 fi
 ## clamd cron setup
-echo -e "clamdのインストールしている場合は [y] \n"
-echo -e "インストールしていない場合は [n] \n"
+echo -e "Jp: clamavのインストールしている場合は [y] / インストールしていない場合は [n]"
+echo -e "En: If you have installed the clamav [y] / If you do not have installed [n]"
 read websvclamd
 if [ ${websvclamd} = "y" ] ; then
 cat <<EOF > /etc/cron.daily/public
@@ -752,5 +759,5 @@ chmod 700 /etc/cron.daily/public
 vim /etc/cron.daily/public
 fi
 ####
-echo -e "WebServer Setup End. \n"
+echo -e "WebServer Setup End."
 ####

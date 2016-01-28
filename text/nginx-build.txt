@@ -1,4 +1,4 @@
-#### lnmp-70 v1.0.0
+#### lnmp-70 v1.0.1
 # SRPM File VERSION.
 NGX_BUILD_VERSION_SRPM=1\.6\.3
 #
