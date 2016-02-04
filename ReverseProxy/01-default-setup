@@ -415,7 +415,7 @@ echo -e "En: It sets up a mail for the administrator. Additional log management 
 read set_logwatch_inst
 if [ ${set_logwatch_inst} = "y" ] ; then
 sed -i '/^root:/d' /etc/aliases
-echo "root:     ${ALIASES_ROOT_MAIL_ADDR}" >> /etc/aliases
+echo "root:           ${ALIASES_ROOT_MAIL_ADDR}" >> /etc/aliases
 vi /etc/aliases
 newaliases
 echo test | mail root
@@ -434,12 +434,12 @@ yum -y install rkhunter
 rkhunter --update
 mkdir /etc/.clamav
 touch /etc/.clamav/exclude
-sed -i "642a\# for Clamav" /etc/rkhunter.conf
-sed -i "643a\ALLOWHIDDENDIR=/etc/.clamav" /etc/rkhunter.conf
-sed -i "685a\# for Clamav" /etc/rkhunter.conf
-sed -i "686a\ALLOWHIDDENFILE=/etc/.clamav/exclude" /etc/rkhunter.conf
-sed -i "687a\#Passwd" /etc/rkhunter.conf
-sed -i "688a\ALLOWHIDDENFILE=/etc/.pwd.lock" /etc/rkhunter.conf
+sed -i "641a\# for Clamav" /etc/rkhunter.conf
+sed -i "642a\ALLOWHIDDENDIR=/etc/.clamav" /etc/rkhunter.conf
+sed -i "684a\# for Clamav" /etc/rkhunter.conf
+sed -i "685a\ALLOWHIDDENFILE=/etc/.clamav/exclude" /etc/rkhunter.conf
+sed -i "686a\#Passwd" /etc/rkhunter.conf
+sed -i "687a\ALLOWHIDDENFILE=/etc/.pwd.lock" /etc/rkhunter.conf
 sed -i "308a\ALLOW_SSH_ROOT_USER=no" /etc/rkhunter.conf
 sed -i "s|^ALLOW_SSH_ROOT_USER=unset$|#ALLOW_SSH_ROOT_USER=unset|g" /etc/rkhunter.conf
 vi /etc/rkhunter.conf
