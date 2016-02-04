@@ -789,7 +789,7 @@ vim ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rw.conf
 ############################################################################
 # concrete5
 cd ${APACHE_FILE_DIRECTORY}
-wget http://www.concrete5.org/download_file/-/view/85712/
+wget ${C5_DL_URL}
 mv ${APACHE_FILE_DIRECTORY}/index.html ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip
 unzip ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip
 rm -f ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip
