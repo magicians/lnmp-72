@@ -14,20 +14,23 @@ FRONTEND_SERVER_PORT=${SERVER_STATIC_IP_ADDR}:443
 BACKEND_LISTEN_PORT=${REVERSE_PROXY_PORT}
 BACKEND_SERVER_PORT=127.0.0.1:${REVERSE_PROXY_PORT}
 #
+## -- PHP-FPM UNIX SOCKET
+BACKEND_LISTEN_SOCK=/var/run/php-fpm/www.sock
+#
 ###############################################################################
 ## 2-2. SSL Setup Config.
 ###############################################################################
 # -- SSL Cert Path.
-FRONT_SSL_CERT=/etc/pki/tls/cert/localhost.crt
-#FRONT_SSL_CERT=
+#FRONT_SSL_CERT=/etc/pki/tls/cert/localhost.crt
+FRONT_SSL_CERT=
 #
 # -- SSL Key Path.
-FRONT_SSL_KEY=/etc/pki/tls/private/localhost.pem
-#FRONT_SSL_KEY=
+#FRONT_SSL_KEY=/etc/pki/tls/private/localhost.pem
+FRONT_SSL_KEY=
 #
 # -- SSL CA Cert Path.
-FRONT_SSLCA_CERT=/etc/pki/tls/cert/ca.crt
-#FRONT_SSLCA_CERT=
+#FRONT_SSLCA_CERT=/etc/pki/tls/cert/ca.crt
+FRONT_SSLCA_CERT=
 #
 # -- SSL DH Param Path.
 FRONT_SSL_DH=/etc/nginx/dhparam.pem
@@ -100,6 +103,7 @@ PHP_SESSION_COOKIE=On
 ## 2-5. LNMP / GeoIP Setup Config.
 ###############################################################################
 # -- GeoIP Path.
+GEOIP_COUNTRY=JP
 GEOIP_PATH=/usr/share/GeoIP
 GEOIP_FILE=GeoIP.dat
 GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
@@ -145,7 +149,8 @@ NGINX_PROXY_CACHE_TEMP=/var/www/tmp
 NGINX_HEADER_X_FRAME_OPT=DENY
 NGINX_HEADER_X_CONTENT_TYPE_OPT=nosniff
 NGINX_HEADER_X_XSS_PROTECT=1\;\ mode=block
-NGINX_HEADER_CONTENT_SP=default-src\ \'self\'
+#NGINX_HEADER_CONTENT_SP=default-src\ \'self\'
+NGINX_HEADER_CONTENT_SP=default-src\ \'self\'\;\ script-src\ \'self\'\ \'unsafe-inline\'\ \'unsafe-eval\'\ https\:\/\/ssl\.google-analytics\.com\;\ img-src\ \'self\'\ https\:\/\/ssl\.google-analytics\.com\;\ style-src\ \'self\'\ \'unsafe-inline\'\ https\:\/\/fonts\.googleapis\.com\ \'self\'\ https\:\/\/themes\.googleusercontent\.com\;\ frame-src\ \'none\'\ object-src\ \'none\'
 #
 # -- Nginx Client Buffer Setup.
 NGINX_CLIENT_BODY=8k
@@ -159,13 +164,16 @@ NGINX_BACKEND_NAME=backend
 #NGINX_BACKEND_NAME=${SETUP_WEBSERVER_HOSTNAME}
 #
 # -- Nginx Backend URI / baserCMS
-#NGINX_BACKEND_DIRECTORY=admin\|installations
+#NGINX_BACKEND_DIRECTORY=admin
+#NGINX_BACKEND_LOGIN=installations
 #
 # -- Nginx Backend URI / WordPress
-NGINX_BACKEND_DIRECTORY=wp-admin\|wp-login\\.php
+NGINX_BACKEND_DIRECTORY=wp-admin
+NGINX_BACKEND_LOGIN=wp-login.php
 #
 # -- Nginx Backend URI / concrete5
-#NGINX_BACKEND_DIRECTORY=login\|dashboard\|install
+#NGINX_BACKEND_DIRECTORY=dashboard\|install
+#NGINX_BACKEND_LOGIN=login
 #
 # -- Nginx Referers URI
 NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ *\.wordpress\.com

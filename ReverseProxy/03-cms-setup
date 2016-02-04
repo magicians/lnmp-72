@@ -6,7 +6,101 @@ source ./default.txt
 source ./server.txt
 source ./cms.txt
 ############################################################################
-#### Database Setup.
+clear
+# Default GZIP Setting.
+echo -e "Nginx Config Setting for CMS."
+echo -e "\n"
+echo -e "00. Default GZIP Setting."
+cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/00-gzip.conf
+    gzip                    on;
+    gzip_static             on;
+    gzip_http_version       1.0;
+    gzip_vary               on;
+    gzip_comp_level         6;
+    gzip_proxied            any;
+    gzip_buffers            4 8k;
+    gzip_types              text/plain text/xml text/css application/xhtml+xml application/xml application/rss+xml application/atom_xml application/x-javascript application/x-httpd-php;
+    gzip_disable            "MSIE [1-6]\\.";
+    gzip_disable            "Mozilla/4";
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/00-gzip.conf
+#
+# GeoIP Setting.
+echo -e "01 GeoIP Setting."
+cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/01-GeoIP.conf
+########################################################################
+# GeoIP License
+# This product includes GeoLite data created by MaxMind, available from 
+# URL: http://www.maxmind.com
+########################################################################
+    geoip_country /usr/share/GeoIP/GeoIP.dat;
+    map \$geoip_country_code \$allowed_country {
+      default no;
+      ${GEOIP_COUNTRY} yes;
+    }
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/01-GeoIP.conf
+#
+# Default Proxy Setting.
+echo -e "02 Default Proxy Setting."
+cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/02-proxy.conf
+    # REVERSE PROXY SETUP
+    # proxy_redirect        off;
+    # 下記をいれていないとキャッシュが生成されない事がある。
+    proxy_ignore_headers  X-Accel-Redirect X-Accel-Expires Cache-Control Expires Set-Cookie;
+    proxy_cache_path      ${NGINX_PROXY_CACHE_PATH} levels=1:2 keys_zone=cache_${CONFIG_HOST_DOMAIN}:4m max_size=50m inactive=120m;
+    proxy_temp_path       ${NGINX_PROXY_CACHE_TEMP};
+    proxy_cache_valid     200 10m;
+    proxy_cache_valid     404 5m;
+    proxy_set_header      Host               \$host;
+    proxy_set_header      X-Real-IP          \$remote_addr;
+    proxy_set_header      X-Forwarded-Host   \$host;
+    proxy_set_header      X-Forwarded-Server \$host;
+    proxy_set_header      X-Forwarded-For    \$proxy_add_x_forwarded_for;
+    proxy_set_header      X-Forwarded-Proto  \$scheme;
+    proxy_set_header      Connection         '';
+    proxy_http_version    1.1;
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/02-proxy.conf
+#
+# Default Backend Setting.
+echo -e "03 Default Backend Setting."
+cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
+    #default upstream setup.
+    upstream ${CONFIG_HOST_DOMAIN}.${NGINX_BACKEND_NAME} {
+            ip_hash;
+            # Backend for Apache.
+            #server      ${BACKEND_SERVER_PORT};
+            # PHP-FPM UNIX SOCKET
+            server      unix:${BACKEND_LISTEN_SOCK};
+            keepalive   ${NGINX_KEEPALIVE_UPSTREAM};
+    }
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
+####
+echo -e "04 Header Secure Setup."
+cat <<EOF > /etc/nginx/conf.d/04-header.conf
+# Header Secure Setup
+add_header X-Frame-Options ${NGINX_HEADER_X_FRAME_OPT};
+add_header X-Content-Type-Options ${NGINX_HEADER_X_CONTENT_TYPE_OPT};
+add_header X-XSS-Protection "${NGINX_HEADER_X_XSS_PROTECT}";
+add_header Content-Security-Policy "${NGINX_HEADER_CONTENT_SP}";
+#add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ssl.google-analytics.com; img-src 'self' https://ssl.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com 'self' https://themes.googleusercontent.com; frame-src 'none' object-src 'none'";
+EOF
+vim /etc/nginx/conf.d/04-header.conf
+####
+echo -e "05 Header Buffer Setup."
+cat <<EOF > /etc/nginx/conf.d/05-buffer.conf
+client_body_buffer_size ${NGINX_CLIENT_BODY};
+client_header_buffer_size ${NGINX_CLIENT_HEAD};
+client_max_body_size ${NGINX_CLIENT_MAXBODY};
+large_client_header_buffers ${NGINX_LARGE_CLIENT_NUM} ${NGINX_LARGE_CLIENT_HEAD};
+EOF
+vim /etc/nginx/conf.d/05-buffer.conf
+####
+clear
+############################################################################
+#### Database Setup Start.
 echo "Database Setup."
 mysql -u root -p${DB_ROOT_PASSWD} -e "CREATE DATABASE ${CREATE_DB_NAME} DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;"
 mysql -u root -p${DB_ROOT_PASSWD} -e "GRANT ALL PRIVILEGES ON ${CREATE_DB_NAME}.* TO ${DB_USER_NAME}@localhost IDENTIFIED BY \"${DB_USER_PASSWD}\";"
@@ -14,14 +108,341 @@ mysql -u root -p${DB_ROOT_PASSWD} -e "DELETE FROM mysql.user WHERE User='root' A
 mysql -u root -p${DB_ROOT_PASSWD} -e "FLUSH PRIVILEGES;"
 mysql -u root -p${DB_ROOT_PASSWD} -e "SHOW DATABASES;"
 mysql -u root -p${DB_ROOT_PASSWD}
-####
+#### Database Setup End.
+############################################################################
 clear
+############################################################################
+echo -e "Nginx: ${CONFIG_HOST_DOMAIN} / SSL Setup"
+# DH PARAM
+echo -e "DH PARAM SETUP."
+openssl dhparam -out ${FRONT_SSL_DH} ${FRONT_SSL_BIT}
+chown nginx ${FRONT_SSL_DH}
+chmod 700 ${FRONT_SSL_DH}
+############################################################################
+clear
+echo -e "SSL PARAM SETUP."
+cat <<EOF > /etc/nginx/https_param
+    ssl on;
+    ssl_certificate         ${FRONT_SSL_CERT};
+    ssl_certificate_key     ${FRONT_SSL_KEY};
+    ssl_dhparam             ${FRONT_SSL_DH};
+    ssl_stapling            on;
+    ssl_stapling_verify     on;
+    ssl_trusted_certificate ${FRONT_SSLCA_CERT};
+    resolver                127.0.0.1;
+
+    ssl_session_timeout 5m;
+
+    ssl_protocols ${ALL_SSL_PROTOCOLS};
+    ssl_ciphers ${ALL_SSL_CIPHERS};
+    ssl_prefer_server_ciphers on;
+
+    #### https://kjur.github.io/jsrsasign/tool_httpscfg.html
+    # Public-Key-Pinningを有効にするにはコメントアウトを外してください
+    #add_header Public-Key-Pins '; max-age=5184000; includeSubDomains';
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+EOF
+vim /etc/nginx/https_param
+############################################################################
+############################################################################
+echo "Nginx Setup http/v2[y] / spdy[n]"
+read nginxhttp2
+####
+if [ ${nginxhttp2} = "y" ] ; then
+# http2 Backend Setting.
+echo -e "HTTP/2.0 PARAM SETUP."
+cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/06-httpv2.conf
+    #Sets the size of the per worker input buffer.
+    http2_recv_buffer_size 256k;
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/06-httpv2.conf
+# HTTP/2.0
+cat <<EOF> /etc/nginx/httpv2_param
+    http2_max_concurrent_streams 128;
+    http2_recv_timeout 30s;
+    http2_idle_timeout 3m;
+    http2_chunk_size 8k;
+EOF
+vim /etc/nginx/httpv2_param
+else
+# SPDY/3.1
+echo -e "SPDY PARAM SETUP."
+cat <<EOF> /etc/nginx/spdy_param
+    spdy_chunk_size             8k;
+    spdy_headers_comp           9;
+EOF
+vim /etc/nginx/spdy_param
+fi
 ############################################################################
 echo -e "CMS Install for WordPress [y] / concrete5 [n]"
 read set_cms_wpinstall
 if [ ${set_cms_wpinstall} = "y" ] ; then
 clear
 echo "WordPress-$WP_VERSION install start."
+############################################################################
+# WordPress
+echo -e "Nginx PHP-FPM Setup."
+cat <<EOF > /etc/nginx/php_fpmd
+# PHP-FPM SSL Setting.
+#
+    location ~ \.php$ {
+        try_files           \$uri =404;
+        include             /etc/nginx/fastcgi_params;
+        fastcgi_pass        unix:${BACKEND_LISTEN_SOCK};
+        fastcgi_index       index.php;
+        fastcgi_param       SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param       HTTPS on;
+        fastcgi_pass_header "X-Accel-Redirect";
+        fastcgi_pass_header "X-Accel-Expires";
+    }
+EOF
+#
+vim /etc/nginx/php_fpmd
+# WordPress
+############################################################################
+# WordPress
+echo -e "WordPress PARAM SETUP."
+cat <<EOF> /etc/nginx/wp_permalink
+    location ~ / {
+        # static files
+        if (-f \$request_filename) {
+            access_log  off;
+            break;
+        }
+        # request to index.php
+        if (!-e \$request_filename) {
+            rewrite ^(.+)\$ /index.php?q=\$1 last;
+        }
+    }
+EOF
+vim /etc/nginx/wp_permalink
+# WordPress
+############################################################################
+echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP."
+############################################################################
+# WordPress
+cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
+server {
+	lisetn      443 ssl;
+    # HTTP/2.0
+    # listen      443 ssl ${NGINX_V2_MOD};
+    # SPDY/3.1
+    # listen      443 ssl ${NGINX_SPDY_MOD};
+    server_name ${CONFIG_HOST_DOMAIN};
+
+    # SSL PARAM
+    include https_param;
+
+    # HTTP/2.0
+    # include httpv2_param;
+
+    # SPDY
+    # include spdy_param;
+
+    root   ${APACHE_FILE_DIRECTORY};
+    index ${NGINX_INDEX_FILE_LIST};
+    charset ${NGINX_DEFAULT_CHARSET};
+
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}.log;
+
+    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    location = /*\.(${NGINX_LOCATION_ASCII_FILE}) {
+        access_log      ${NGINX_LOCATION_LOG};
+        expires         ${NGINX_EXPIRES_DAY};
+        log_not_found   ${NGINX_LOG_NOT_FOUND};
+        break;
+    }
+
+    location = /*\.(${NGINX_LOCATION_BINARY_FILE}) {
+        access_log      ${NGINX_LOCATION_LOG};
+        expires         ${NGINX_EXPIRES_DAY};
+        log_not_found   ${NGINX_LOG_NOT_FOUND};
+        break;
+    }
+
+    # php-fpm Setup
+    #
+    include php_fpmd;
+
+    # Permalink Setup
+    # WordPress
+    #
+    include wp_permalink;
+
+    # Proxy Setup
+    location / {
+        # WordPress Default Setup
+        #
+        try_files \$uri \$uri/ /index.php?\$args;
+
+        # HTTP Method Deny
+        #
+        if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
+            return 444;
+        }
+        # Cache Control
+        #
+        add_header Cache-Control "public, max-age=86400";
+
+        # Cache Setup
+        #
+        set \$do_not_cache       0;
+        if (\$request_method != "GET") {
+            set \$do_not_cache    1;
+        }
+        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}\|${NGINX_BACKEND_LOGIN})') {
+            set \$do_not_cache   1;
+        }
+        # WordPress
+        if (\$http_cookie ~* "comment_author_|wordpress_(?!test_cookie)|wp-postpass_" ) {
+            set \$do_not_cache   1;
+        }
+        # Mobile UA Setup
+        #
+        set \$mobile "";
+        if (\$http_user_agent ~* '(DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter)') {
+            set \$mobile ".kt";
+        }
+        if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
+            set \$mobile ".sp";
+        }
+
+        # REVERSE PROXY SETUP
+        #
+        proxy_no_cache           \$do_not_cache;
+        proxy_cache_bypass       \$do_not_cache;
+        proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
+        proxy_cache              cache_${CONFIG_HOST_DOMAIN};
+        proxy_pass               ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+    }
+
+    # SSL Admin Area Setup
+    # WordPress Admin Directory
+    location /${NGINX_BACKEND_DIRECTORY} {
+        access_log      off;
+        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        # GeoIP
+        if (\$allowed_country != yes) {
+            return 444;
+        }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+    }
+
+    location = /${NGINX_BACKEND_LOGIN} {
+        access_log      off;
+        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        # GeoIP
+        if (\$allowed_country != yes) {
+            return 444;
+        }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+    }
+
+    # redirect server error pages to the static page /403.html
+    #
+    error_page  403              /403.html;
+    location = /403.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /404.html
+    #
+    error_page  404              /404.html;
+    location = /404.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # WordPress
+    location ~ /uploads/ {
+        valid_referers    ${NGINX_REFERERS_URI};
+        if (\$invalid_referer) {
+            return 403;
+        }
+    }
+
+    # WordPress no Admin for HTTP
+    if (\$uri ~ '/author') {
+        rewrite ^(.*)?$ https://\$host last;
+        break;
+    }
+
+    # WordPress Config Files Access Setup
+    #
+    location ~ /(wp-config\.php|wp-mail\.php|install\.php|xmlrpc\.php) {
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+    }
+}
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
+# WordPress
+######################################################################
+echo -e "Rewrite Config."
+######################################################################
+# WordPress
+cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rw.conf
+server {
+    listen      80;
+    server_name ${CONFIG_HOST_DOMAIN};
+
+    root   ${APACHE_FILE_DIRECTORY};
+    charset ${NGINX_DEFAULT_CHARSET};
+
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_rw.log;
+
+    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    location / {
+        if (\$server_port = 80) {
+            rewrite (.*) https://\$host\$request_uri last;
+            break;
+        }
+    }
+
+    # redirect server error pages to the static page /403.html
+    #
+    error_page  403              /403.html;
+    location = /403.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /404.html
+    #
+    error_page  404              /404.html;
+    location = /404.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+}
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rw.conf
+/usr/sbin/nginx -t
+# WordPress
+############################################################################
+# WordPress
 ## Install File Download.
 cd ${APACHE_FILE_DIRECTORY}
 curl -O ${WP_DL_URL}/${WP_DL_FILE}
@@ -106,10 +527,267 @@ rm -f *.zip
 fi
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} ${APACHE_FILE_DIRECTORY}/*
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/*
-#####################################
+# WordPress
+############################################################################
 echo "WordPress-$WP_VERSION install end."
 else
 echo "$C5_VERSION install start."
+############################################################################
+# concrete5
+echo -e "Nginx PHP-FPM Setup for $C5_VERSION"
+cat <<EOF > /etc/nginx/php_fpmd
+# PHP-FPM SSL Setting.
+#
+    location ~ \.php(\$|/) {
+        include             /etc/nginx/fastcgi_params;
+        fastcgi_pass        unix:${BACKEND_LISTEN_SOCK};
+        fastcgi_index       index.php;
+        fastcgi_param       SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param       HTTPS on;
+        fastcgi_pass_header "X-Accel-Redirect";
+        fastcgi_pass_header "X-Accel-Expires";
+    }
+EOF
+#
+vim /etc/nginx/php_fpmd
+# concrete5
+############################################################################
+# concrete5
+echo -e "concrete5 PARAM SETUP."
+cat <<EOF> /etc/nginx/c5_permalink
+    location ~ / {
+        if (!-e \$request_filename) {
+            rewrite ^ /index.php last;
+        }
+    }
+EOF
+vim /etc/nginx/c5_permalink
+# concrete5
+############################################################################
+echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP."
+############################################################################
+# concrete5
+cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
+server {
+	lisetn      443 ssl;
+    # HTTP/2.0
+    # listen      443 ssl ${NGINX_V2_MOD};
+    # SPDY/3.1
+    # listen      443 ssl ${NGINX_SPDY_MOD};
+    server_name ${CONFIG_HOST_DOMAIN};
+
+    # SSL PARAM
+    include https_param;
+    # HTTP/2.0
+    # include httpv2_param;
+    # SPDY
+    # include spdy_param;
+
+    root   ${APACHE_FILE_DIRECTORY};
+    index ${NGINX_INDEX_FILE_LIST};
+    charset ${NGINX_DEFAULT_CHARSET};
+
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}.log;
+
+    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    location = /*\.(${NGINX_LOCATION_ASCII_FILE}) {
+        access_log      ${NGINX_LOCATION_LOG};
+        expires         ${NGINX_EXPIRES_DAY};
+        log_not_found   ${NGINX_LOG_NOT_FOUND};
+        break;
+    }
+
+    location = /*\.(${NGINX_LOCATION_BINARY_FILE}) {
+        access_log      ${NGINX_LOCATION_LOG};
+        expires         ${NGINX_EXPIRES_DAY};
+        log_not_found   ${NGINX_LOG_NOT_FOUND};
+        break;
+    }
+
+    # php-fpm Setup
+    #
+    include php_fpmd;
+
+    # Permalink Setup
+    # concrete5
+    #
+    include c5_permalink;
+
+    # Proxy Setup
+    location / {
+        # WordPress Default Setup
+        #
+        try_files \$uri \$uri/ /index.php?\$args;
+
+        # HTTP Method Deny
+        #
+        if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
+            return 444;
+        }
+        # Cache Control
+        #
+        add_header Cache-Control "public, max-age=86400";
+
+        # Cache Setup
+        #
+        set \$do_not_cache       0;
+        if (\$request_method != "GET") {
+            set \$do_not_cache    1;
+        }
+        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}\|${NGINX_BACKEND_LOGIN})') {
+            set \$do_not_cache   1;
+        }
+        # concrete5
+        if (\$http_cookie ~* "CONCRETE5|CONCRETE5_INSTALL_TEST|dashboardPanelStatus" ) {
+            set \$do_not_cache   1;
+        }
+        # Mobile UA Setup
+        #
+        set \$mobile "";
+        if (\$http_user_agent ~* '(DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter)') {
+            set \$mobile ".kt";
+        }
+        if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
+            set \$mobile ".sp";
+        }
+
+        # REVERSE PROXY SETUP
+        #
+        proxy_no_cache           \$do_not_cache;
+        proxy_cache_bypass       \$do_not_cache;
+        proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
+        proxy_cache              cache_${CONFIG_HOST_DOMAIN};
+        proxy_pass               ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+    }
+
+    # SSL Admin Area Setup
+    # WordPress Admin Directory
+    location /(${NGINX_BACKEND_DIRECTORY}) {
+        access_log      off;
+        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        # GeoIP
+        if (\$allowed_country != yes) {
+            return 444;
+        }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+    }
+
+    location = /${NGINX_BACKEND_LOGIN} {
+        access_log      off;
+        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        # GeoIP
+        if (\$allowed_country != yes) {
+            return 444;
+        }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+    }
+
+    # redirect server error pages to the static page /403.html
+    #
+    error_page  403              /403.html;
+    location = /403.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /404.html
+    #
+    error_page  404              /404.html;
+    location = /404.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # concrete5
+    location ~ /files/ {
+        valid_referers    ${NGINX_REFERERS_URI};
+        if (\$invalid_referer) {
+            return 403;
+        }
+    }
+
+    # concrete5 no Admin for HTTP
+    # if (\$uri ~ '/author') {
+    #    rewrite ^(.*)?$ https://\$host last;
+    #    break;
+    # }
+
+    # concrete5 Config Files Access Setup
+    #
+    #location ~ /(config|install|database.php) {
+    #    allow   127.0.0.1;
+    #    allow   ${SERVER_STATIC_IP_ADDR};
+    #    allow   ${GLOBAL_IP_ADDR};
+    #    deny    all;
+    #}
+
+}
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
+# concrete5
+######################################################################
+echo -e "Rewrite Config."
+######################################################################
+# concrete5
+cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rw.conf
+server {
+    listen      80;
+    server_name ${CONFIG_HOST_DOMAIN};
+
+    root   ${APACHE_FILE_DIRECTORY};
+    charset ${NGINX_DEFAULT_CHARSET};
+
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_rw.log;
+
+    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    location / {
+        if (\$server_port = 80) {
+            rewrite (.*) https://\$host\$request_uri last;
+            break;
+        }
+    }
+
+    # redirect server error pages to the static page /403.html
+    #
+    error_page  403              /403.html;
+    location = /403.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /404.html
+    #
+    error_page  404              /404.html;
+    location = /404.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+}
+EOF
+vim ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rw.conf
+/usr/sbin/nginx -t
+# concrete5
+############################################################################
+# concrete5
 cd ${APACHE_FILE_DIRECTORY}
 wget http://www.concrete5.org/download_file/-/view/85712/
 mv ${APACHE_FILE_DIRECTORY}/index.html ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip
@@ -117,11 +795,13 @@ unzip ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip
 rm -f ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip
 mv ${APACHE_FILE_DIRECTORY}/${C5_VERSION}/* ${APACHE_FILE_DIRECTORY}/
 rm -fr ${APACHE_FILE_DIRECTORY}/${C5_VERSION}
+echo "short_open_tag = On" ${APACHE_FILE_DIRECTORY}/.user.ini
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} ${APACHE_FILE_DIRECTORY}/*
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/*
 echo "$C5_VERSION install end."
 fi
-#####################################
+# concrete5
+############################################################################
 clear
 /usr/sbin/nginx -t
 echo -e "Jp: Webサーバを再起動しますか？ [y/n]"
@@ -138,7 +818,7 @@ fi
 clear
 echo -e "Jp: 選択したCMSのインストールに関する事前準備は完了しました。"
 echo -e "Jp: ブラウザを起動して引き続きインストール作業を行ってください。"
-echo -e "Jp: その後 last_optimization を実行し、ファイルのチェックを行ってください。"
+echo -e "Jp: その後 last_optimization を実行し、ファイルのチェックを行ってください。\n"
 echo -e "En: Advance preparation on the installation of the selected CMS was completed."
 echo -e "En: Please continue to perform the installation work by starting the browser."
 echo -e "En: Then run the last_optimization, please do check of files."
