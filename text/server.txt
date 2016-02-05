@@ -190,4 +190,7 @@ NGINX_LOCATION_LOG=off
 NGINX_EXPIRES_DAY=7d
 NGINX_LOG_NOT_FOUND=off
 #
+# -- MariaDB Edit.
+DB_STORAGE_ENGINE=InnoDB
+#
 ###############################################################################

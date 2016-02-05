@@ -20,7 +20,7 @@ curl -O http://nginx.org/download/${NGX_BUILD_SOURCE}
 ## Nginx Version Edit.
 sed -i "s|^Version: ${NGX_BUILD_VERSION_SRPM}|Version: ${NGX_BUILD_VERSION_SOURCE}|g" ~/rpm/SPECS/nginx.spec
 sed -i "82a\BuildRequires: GeoIP-devel" ~/rpm/SPECS/nginx.spec
-sed -i "104a\export LANG='ja_JP.UTF-8'" ~/rpm/SPECS/nginx.spec
+sed -i "105a\export LANG='ja_JP.UTF-8'" ~/rpm/SPECS/nginx.spec
 sed -i "121a\        --with-http_geoip_module \\\\" ~/rpm/SPECS/nginx.spec
 sed -i "161a\        --with-http_geoip_module \\\\" ~/rpm/SPECS/nginx.spec
 ##
@@ -39,7 +39,8 @@ rpmbuild -bb ~/rpm/SPECS/nginx.spec
 ls -l ~/rpm/RPMS/x86_64
 ## Nginx Install
 #sudo rpm -ivh ~/rpm/RPMS/noarch/nginx-filesystem-${NGX_BUILD_VERSION_SOURCE}-${NGX_BUILD_VERSION_RE_SRPM}.el7.centos.noarch.rpm
-sudo rpm -ivh ~/rpm/RPMS/x86_64/nginx-${NGX_BUILD_VERSION_SOURCE}-${NGX_BUILD_VERSION_RE_SRPM}.el7.centos.x86_64.rpm
+#sudo rpm -ivh ~/rpm/RPMS/x86_64/nginx-${NGX_BUILD_VERSION_SOURCE}-${NGX_BUILD_VERSION_RE_SRPM}.el7.centos.x86_64.rpm
+sudo rpm -ivh ~/rpm/RPMS/x86_64/nginx-${NGX_BUILD_VERSION_SOURCE}-${NGX_BUILD_VERSION_RE_SRPM}.el7.centos.ngx.x86_64.rpm
 sudo /usr/sbin/nginx -v
 sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default_conf
 sudo mv /etc/nginx/conf.d/example_ssl.conf /etc/nginx/conf.d/example_ssl_conf

@@ -3,7 +3,11 @@
 # -- 1-2. Base Environment Variable. --
 ###############################################################################
 # -- Domain Name. --
+# -- WebServer
 SETUP_WEBSERVER_HOSTNAME=localhost
+#
+SETUP_VPS_DNS_PRI_IP=
+#SETUP_VPS_DNS_SEC_IP=
 #
 # -- Local Access IP. / Local Access Network Only. --
 LOCAL_IP_ADDR=192.168.1.0/24

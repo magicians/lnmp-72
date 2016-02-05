@@ -48,6 +48,10 @@ sed -i "s|^#auth\t\trequired|auth\t\trequired|" /etc/pam.d/su
 #
 vi /etc/pam.d/su
 visudo
+echo -e "Locale Setup."
+localectl
+localectl set-locale LANG=ja_JP.UTF-8
+localectl
 fi
 #
 ############################################################################

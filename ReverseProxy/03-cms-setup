@@ -129,7 +129,9 @@ cat <<EOF > /etc/nginx/https_param
     ssl_stapling            on;
     ssl_stapling_verify     on;
     ssl_trusted_certificate ${FRONT_SSLCA_CERT};
-    resolver                127.0.0.1;
+    #resolver                127.0.0.1;
+    resolver                ${SETUP_VPS_DNS_PRI_IP};
+    #resolver                ${SETUP_VPS_DNS_SEC_IP};
 
     ssl_session_timeout 5m;
 
@@ -316,34 +318,49 @@ server {
         proxy_cache              cache_${CONFIG_HOST_DOMAIN};
         proxy_pass               ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
 
-        # SSL Admin Area Setup
-        # WordPress Admin Directory
-        location /${NGINX_BACKEND_DIRECTORY} {
-            access_log      off;
-            proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
-            # GeoIP
-            if (\$allowed_country != yes) {
-                return 444;
-            }
-            allow   127.0.0.1;
-            allow   ${SERVER_STATIC_IP_ADDR};
-            allow   ${GLOBAL_IP_ADDR};
-            deny    all;
-        }
+    }
 
-        location = /${NGINX_BACKEND_LOGIN} {
-            access_log      off;
-            proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
-            # GeoIP
-            if (\$allowed_country != yes) {
-                return 444;
-            }
-            allow   127.0.0.1;
-            allow   ${SERVER_STATIC_IP_ADDR};
-            allow   ${GLOBAL_IP_ADDR};
-            deny    all;
+    # SSL Admin Area Setup
+    # WordPress Admin Directory
+    location /${NGINX_BACKEND_DIRECTORY} {
+        access_log      off;
+        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        # GeoIP
+        if (\$allowed_country != yes) {
+            return 444;
         }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+    }
 
+    location = /${NGINX_BACKEND_LOGIN} {
+        access_log      off;
+        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        # GeoIP
+        if (\$allowed_country != yes) {
+            return 444;
+        }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+    }
+
+    location ~ /xmlrpc.php {
+        valid_referers    wordpress.com;
+        if ($invalid_referer) {
+            return 444;
+        }
+        proxy_pass      https://$host.backend;
+    }
+
+    location ~ /uploads/ {
+        valid_referers    ${NGINX_REFERERS_URI};
+        if ($invalid_referer) {
+            return 403;
+        }
     }
 
     # redirect server error pages to the static page /403.html
@@ -367,14 +384,6 @@ server {
         root   ${APACHE_ERROR_DIRECTORY};
     }
 
-    # WordPress
-    location ~ /uploads/ {
-        valid_referers    ${NGINX_REFERERS_URI};
-        if (\$invalid_referer) {
-            return 403;
-        }
-    }
-
     # WordPress no Admin for HTTP
     if (\$uri ~ '/author') {
         rewrite ^(.*)?$ https://\$host last;
@@ -383,7 +392,7 @@ server {
 
     # WordPress Config Files Access Setup
     #
-    location ~ /(wp-config\.php|wp-mail\.php|install\.php|xmlrpc\.php) {
+    location ~ /(wp-config\.php|wp-mail\.php|install\.php|wp-cron\.php) {
         allow   127.0.0.1;
         allow   ${SERVER_STATIC_IP_ADDR};
         allow   ${GLOBAL_IP_ADDR};
