@@ -85,7 +85,6 @@ add_header X-Frame-Options ${NGINX_HEADER_X_FRAME_OPT};
 add_header X-Content-Type-Options ${NGINX_HEADER_X_CONTENT_TYPE_OPT};
 add_header X-XSS-Protection "${NGINX_HEADER_X_XSS_PROTECT}";
 add_header Content-Security-Policy "${NGINX_HEADER_CONTENT_SP}";
-#add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ssl.google-analytics.com; img-src 'self' https://ssl.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com 'self' https://themes.googleusercontent.com; frame-src 'none' object-src 'none'";
 EOF
 vim /etc/nginx/conf.d/04-header.conf
 ####
@@ -107,6 +106,7 @@ mysql -u root -p${DB_ROOT_PASSWD} -e "GRANT ALL PRIVILEGES ON ${CREATE_DB_NAME}.
 mysql -u root -p${DB_ROOT_PASSWD} -e "DELETE FROM mysql.user WHERE User='root' AND host IN ('127.0.0.1', '::1');"
 mysql -u root -p${DB_ROOT_PASSWD} -e "FLUSH PRIVILEGES;"
 mysql -u root -p${DB_ROOT_PASSWD} -e "SHOW DATABASES;"
+mysql -u root -p${DB_ROOT_PASSWD} -e "SELECT host,user FROM mysql.user;"
 mysql -u root -p${DB_ROOT_PASSWD}
 #### Database Setup End.
 ############################################################################
@@ -315,34 +315,35 @@ server {
         proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
         proxy_cache              cache_${CONFIG_HOST_DOMAIN};
         proxy_pass               ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
-    }
 
-    # SSL Admin Area Setup
-    # WordPress Admin Directory
-    location /${NGINX_BACKEND_DIRECTORY} {
-        access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
-        # GeoIP
-        if (\$allowed_country != yes) {
-            return 444;
+        # SSL Admin Area Setup
+        # WordPress Admin Directory
+        location /${NGINX_BACKEND_DIRECTORY} {
+            access_log      off;
+            proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+            # GeoIP
+            if (\$allowed_country != yes) {
+                return 444;
+            }
+            allow   127.0.0.1;
+            allow   ${SERVER_STATIC_IP_ADDR};
+            allow   ${GLOBAL_IP_ADDR};
+            deny    all;
         }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
-    }
 
-    location = /${NGINX_BACKEND_LOGIN} {
-        access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
-        # GeoIP
-        if (\$allowed_country != yes) {
-            return 444;
+        location = /${NGINX_BACKEND_LOGIN} {
+            access_log      off;
+            proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+            # GeoIP
+            if (\$allowed_country != yes) {
+                return 444;
+            }
+            allow   127.0.0.1;
+            allow   ${SERVER_STATIC_IP_ADDR};
+            allow   ${GLOBAL_IP_ADDR};
+            deny    all;
         }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
+
     }
 
     # redirect server error pages to the static page /403.html
@@ -607,12 +608,12 @@ server {
 
     # php-fpm Setup
     #
-    include php_fpmd;
+    #include php_fpmd;
 
     # Permalink Setup
     # concrete5
     #
-    include c5_permalink;
+    #include c5_permalink;
 
     # Proxy Setup
     location / {
@@ -659,34 +660,35 @@ server {
         proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
         proxy_cache              cache_${CONFIG_HOST_DOMAIN};
         proxy_pass               ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
-    }
 
-    # SSL Admin Area Setup
-    # WordPress Admin Directory
-    location /(${NGINX_BACKEND_DIRECTORY}) {
-        access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
-        # GeoIP
-        if (\$allowed_country != yes) {
-            return 444;
+        # SSL Admin Area Setup
+        # WordPress Admin Directory
+        location /(${NGINX_BACKEND_DIRECTORY}) {
+            access_log      off;
+            proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+            # GeoIP
+            if (\$allowed_country != yes) {
+                return 444;
+            }
+            allow   127.0.0.1;
+            allow   ${SERVER_STATIC_IP_ADDR};
+            allow   ${GLOBAL_IP_ADDR};
+            deny    all;
         }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
-    }
 
-    location = /${NGINX_BACKEND_LOGIN} {
-        access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
-        # GeoIP
-        if (\$allowed_country != yes) {
-            return 444;
+        location = /${NGINX_BACKEND_LOGIN} {
+            access_log      off;
+            proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+            # GeoIP
+            if (\$allowed_country != yes) {
+                return 444;
+            }
+            allow   127.0.0.1;
+            allow   ${SERVER_STATIC_IP_ADDR};
+            allow   ${GLOBAL_IP_ADDR};
+            deny    all;
         }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
+
     }
 
     # redirect server error pages to the static page /403.html

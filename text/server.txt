@@ -113,9 +113,9 @@ GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
 ###############################################################################
 # -- Nginx Worker Process xx
 #NGINX_WORKER_PROCESSES=1
-NGINX_WORKER_PROCESSES=2
+#NGINX_WORKER_PROCESSES=2
 #NGINX_WORKER_PROCESSES=3
-#NGINX_WORKER_PROCESSES=auto
+NGINX_WORKER_PROCESSES=auto
 # -- Nginx worker_cpu_affinity auto / ver.1.9.10 ~ | 010 010 / ~ ver.1.9.9
 #NGINX_WORKER_CPU_AFFINITY=010\ 010
 NGINX_WORKER_CPU_AFFINITY=auto
