@@ -23,7 +23,7 @@ DB_USER_NAME=
 # -- Install Host
 WP_SCHEMA=${NGINX_SCHEMA}
 # -- WordPress Version
-WP_VERSION=4.4
+WP_VERSION=4.4.2
 # -- WordPress Download URL
 WP_DL_URL=https://ja.wordpress.org/
 # -- WordPress Download File Name

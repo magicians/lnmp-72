@@ -4,7 +4,8 @@ source ./nginx-build.txt
 ## Nginx Build on User Directory.
 echo "Start Nginx Build"
 mkdir -p ~/rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}/
-mkdir -p ~/rpm/RPMS/{noarch,x86_64}
+mkdir -p ~/rpm/RPMS/x86_64
+#mkdir -p ~/rpm/RPMS/{noarch,x86_64}
 ## .rpmmacros Edit
 echo "%_topdir $HOME/rpm" >> ~/.rpmmacros
 vim ~/.rpmmacros
@@ -34,10 +35,10 @@ fi
 vim ~/rpm/SPECS/nginx.spec
 ## Nginx Source Build Start.
 rpmbuild -bb ~/rpm/SPECS/nginx.spec
-ls -l ~/rpm/RPMS/noarch
+#ls -l ~/rpm/RPMS/noarch
 ls -l ~/rpm/RPMS/x86_64
 ## Nginx Install
-sudo rpm -ivh ~/rpm/RPMS/noarch/nginx-filesystem-${NGX_BUILD_VERSION_SOURCE}-${NGX_BUILD_VERSION_RE_SRPM}.el7.centos.noarch.rpm
+#sudo rpm -ivh ~/rpm/RPMS/noarch/nginx-filesystem-${NGX_BUILD_VERSION_SOURCE}-${NGX_BUILD_VERSION_RE_SRPM}.el7.centos.noarch.rpm
 sudo rpm -ivh ~/rpm/RPMS/x86_64/nginx-${NGX_BUILD_VERSION_SOURCE}-${NGX_BUILD_VERSION_RE_SRPM}.el7.centos.x86_64.rpm
 sudo /usr/sbin/nginx -v
 sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default_conf
