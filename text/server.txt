@@ -1,4 +1,4 @@
-#### lnmp-70 v1.0.1
+#### lnmp-70 v1.0.2
 ###############################################################################
 ## 2.WebServer Environment Variable.
 ###############################################################################
@@ -16,6 +16,12 @@ BACKEND_SERVER_PORT=127.0.0.1:${REVERSE_PROXY_PORT}
 #
 ## -- PHP-FPM UNIX SOCKET
 BACKEND_LISTEN_SOCK=/var/run/php-fpm/www.sock
+#
+## -- PHP-FPM max_children
+PHP_FPM_MAX_CHILDREN=10
+#
+## -- PHP-FPM max_requests
+PHP_FPM_MAX_REQUEST=500
 #
 ###############################################################################
 ## 2-2. SSL Setup Config.
@@ -38,6 +44,12 @@ FRONT_SSL_DH=/etc/nginx/dhparam.pem
 #
 # -- SSL DH Param.
 FRONT_SSL_BIT=2048
+#
+# -- SSL SESSION TIME
+FRONT_SSL_SESSION=5m
+#
+# -- SSL KEEPALIVE TIME
+FRONT_SSL_KEEPALIVE_TIME=10
 #
 # -- ssl protocols.
 ALL_SSL_PROTOCOLS=TLSv1\.2\ TLSv1\.1\ TLSv1
@@ -62,7 +74,10 @@ ALL_SSL_CIPHERS=HIGH:!aNULL:!MD5
 #### -- Mozilla Intermediate Compatibility Profile Middle Security Start. --
 #ALL_SSL_CIPHERS=ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA
 ## Mozilla Intermediate Compatibility Profile Middle Security End. --
-
+#####
+## -- resolver reload time.
+NGINX_RESOLVER_RELOAD=86400
+#
 ###############################################################################
 ## 2-3. WebServer Setup Config.
 ###############################################################################
@@ -159,9 +174,8 @@ NGINX_CLIENT_MAXBODY=1m
 NGINX_LARGE_CLIENT_NUM=4
 NGINX_LARGE_CLIENT_HEAD=8k
 #
-# -- Nginx Upstream.
-NGINX_BACKEND_NAME=backend
-#NGINX_BACKEND_NAME=${SETUP_WEBSERVER_HOSTNAME}
+## -- Nginx Cache Reload Time
+NGINX_BACKEND_CACHE_RELOAD=${NGINX_RESOLVER_RELOAD}
 #
 # -- Nginx Backend URI / baserCMS
 #NGINX_BACKEND_DIRECTORY=admin
@@ -176,7 +190,7 @@ NGINX_BACKEND_LOGIN=wp-login.php
 #NGINX_BACKEND_LOGIN=login
 #
 # -- Nginx Referers URI
-NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ *\.wordpress\.com
+NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ wordpress\.com
 #
 # -- Nginx Deny File and Dir.
 NGINX_DENY_ALL_DIR=ht\|git\|svn

@@ -1,4 +1,4 @@
-#### lnmp-70 v1.0.1
+#### lnmp-70 v1.0.2
 ###############################################################################
 # -- 1-2. Base Environment Variable. --
 ###############################################################################
@@ -6,8 +6,11 @@
 # -- WebServer
 SETUP_WEBSERVER_HOSTNAME=localhost
 #
+# -- PRIMARY DNS
 SETUP_VPS_DNS_PRI_IP=
-#SETUP_VPS_DNS_SEC_IP=
+#
+# -- SECONDARY DNS
+SETUP_VPS_DNS_SEC_IP=
 #
 # -- Local Access IP. / Local Access Network Only. --
 LOCAL_IP_ADDR=192.168.1.0/24
@@ -23,6 +26,12 @@ LOCAL_IP_HOSTS=192.168.1.
 #
 # -- Global IP. / Provider Host. --
 GLOBAL_ACCESS_HOSTS=
+#
+# -- Default Language
+SERVER_DEFAULT_LANG=ja_JP.UTF-8
+#
+# -- Default Charset
+SERVER_DEFAULT_CHARSET=UTF-8
 #
 ###############################################################################
 # -- 1-3. iptables-services.

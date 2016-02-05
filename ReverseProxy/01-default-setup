@@ -1,5 +1,5 @@
 #!/bin/sh
-#### lnmp-70 v1.0.1
+#### lnmp-70 v1.0.2
 ############################################################################
 source ./initfile.txt
 source ./default.txt
@@ -48,9 +48,9 @@ sed -i "s|^#auth\t\trequired|auth\t\trequired|" /etc/pam.d/su
 #
 vi /etc/pam.d/su
 visudo
-echo -e "Locale Setup."
+echo -e "Locale Setup. / LANG=${SERVER_DEFAULT_LANG}"
 localectl
-localectl set-locale LANG=ja_JP.UTF-8
+localectl set-locale LANG=${SERVER_DEFAULT_LANG}
 localectl
 fi
 #
@@ -122,11 +122,13 @@ echo "-A INPUT -i lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #ICMP エコー応答許可
 echo "-A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-name t_icmp --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #ICMP さくらのシンプル監視のみ許可
 #echo "-A INPUT -p icmp -m icmp --icmp-type 8 -s 61.211.224.144/28 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 #echo "-A INPUT -p icmp -m icmp --icmp-type 8 -d 61.211.224.144/28 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+
+#ICMP hashlimit
+echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-name t_icmp --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #パケットチェック
 echo "-A INPUT -p 50 -j ACCEPT" >> \$IPTABLES_CONF_TMP
@@ -290,10 +292,12 @@ else
 	vi /etc/sysconfig/selinux
 	yum install selinux-policy-targeted selinux-policy-devel
 	# SSH Port
+	echo -e "Set SSH Port."
 	semanage port -l | grep ssh
 	semanage port -a -t ssh_port_t -p tcp ${SSH_EDIT_PORT}
 	semanage port -l | grep ssh
 	# HTTP Port
+	echo -e "Set HTTP Port."
 	semanage port -l | grep http
 	semanage port -a -t http_cache_port_t -p tcp ${REVERSE_PROXY_PORT}
 	semanage port -l | grep http
@@ -332,8 +336,6 @@ rpm -ivh ${RepoRemix86}
 #
 sed -i "11a\exclude=clam*" /etc/yum.repos.d/rpmforge.repo
 vi /etc/yum.repos.d/rpmforge.repo
-## clamd-0.98.4 and clamav-0.98.7 / Conflict.
-#sed -i "8a\#exclude=clam*" /etc/yum.repos.d/epel.repo
 vi /etc/yum.repos.d/epel.repo
 vi /etc/yum.repos.d/elrepo.repo
 vi /etc/yum.repos.d/remi.repo

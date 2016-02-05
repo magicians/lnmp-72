@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-70 v1.0.1
+#### lnmp-70 v1.0.2
 source ./nginx-build.txt
 ## Nginx Build on User Directory.
 echo "Start Nginx Build"

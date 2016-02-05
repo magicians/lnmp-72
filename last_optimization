@@ -1,9 +1,13 @@
 #!/bin/bash
-#### lnmp-70 v1.0.1
+#### lnmp-70 v1.0.2
 ## rkhunter new hash. rkhunterがスキャンする際に利用するハッシュの新規生成。
 #
 source ./initfile.txt
 ####
+rm -f ${INSTALL_PATH}/*.sh
+rm -f ${INSTALL_PATH}/{default.txt,server.txt,cms.txt,nginx-build.txt,*.md,.gitignore}
+rm -fr ${INSTALL_PATH}/{ReverseProxy,text,.git}
+
 cat <<EOF > /home/${USER_NAME}/check.sh
 #!/bin/bash
 sh /etc/cron.daily/clamscan
@@ -15,7 +19,7 @@ echo -e "rootkit チェックしますか？ [y/n]"
 echo -e "rootkit check? [y/n]"
 read checkrootkit
 # Rootkit Check.
-if [ ${checkrootkit} = "y" ] ; then
+if [ \${checkrootkit} = "y" ] ; then
 rkhunter --check --skip-keypress
 fi
 EOF

@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-70 v1.0.1
+#### lnmp-70 v1.0.2
 ############################################################################
 source ./initfile.txt
 source ./default.txt
@@ -67,7 +67,7 @@ vim ${NGINX_CONFIG_DIRECTORY}/02-proxy.conf
 echo -e "03 Default Backend Setting."
 cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
     #default upstream setup.
-    upstream ${CONFIG_HOST_DOMAIN}.${NGINX_BACKEND_NAME} {
+    upstream ${CONFIG_HOST_DOMAIN}.backend {
             ip_hash;
             # Backend for Apache.
             #server      ${BACKEND_SERVER_PORT};
@@ -122,27 +122,26 @@ chmod 700 ${FRONT_SSL_DH}
 clear
 echo -e "SSL PARAM SETUP."
 cat <<EOF > /etc/nginx/https_param
-    ssl on;
-    ssl_certificate         ${FRONT_SSL_CERT};
-    ssl_certificate_key     ${FRONT_SSL_KEY};
-    ssl_dhparam             ${FRONT_SSL_DH};
-    ssl_stapling            on;
-    ssl_stapling_verify     on;
-    ssl_trusted_certificate ${FRONT_SSLCA_CERT};
-    #resolver                127.0.0.1;
-    resolver                ${SETUP_VPS_DNS_PRI_IP};
-    #resolver                ${SETUP_VPS_DNS_SEC_IP};
+    ssl                          on;
+    ssl_certificate              ${FRONT_SSL_CERT};
+    ssl_certificate_key          ${FRONT_SSL_KEY};
+    ssl_dhparam                  ${FRONT_SSL_DH};
 
-    ssl_session_timeout 5m;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+    ssl_prefer_server_ciphers    on;
+
+    ssl_session_cache shared:SSL:${FRONT_SSL_SESSION};
+    ssl_session_timeout          ${FRONT_SSL_SESSION};
+    keepalive_timeout            ${FRONT_SSL_KEEPALIVE_TIME};
 
     ssl_protocols ${ALL_SSL_PROTOCOLS};
     ssl_ciphers ${ALL_SSL_CIPHERS};
-    ssl_prefer_server_ciphers on;
 
-    #### https://kjur.github.io/jsrsasign/tool_httpscfg.html
-    # Public-Key-Pinningを有効にするにはコメントアウトを外してください
-    #add_header Public-Key-Pins '; max-age=5184000; includeSubDomains';
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+    ssl_stapling                 on;
+    ssl_stapling_verify          on;
+    ssl_trusted_certificate      ${FRONT_SSLCA_CERT};
+    resolver                     ${SETUP_VPS_DNS_PRI_IP} ${SETUP_VPS_DNS_SEC_IP} valid=${NGINX_RESOLVER_RELOAD};
+    resolver_timeout             ${FRONT_SSL_KEEPALIVE_TIME};
 EOF
 vim /etc/nginx/https_param
 ############################################################################
@@ -224,12 +223,61 @@ echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP."
 ############################################################################
 # WordPress
 cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
+#### HTTP Config.
+##
+server {
+    listen      80;
+    listen      [::]:80;
+    server_name ${CONFIG_HOST_DOMAIN};
+
+    root   ${APACHE_FILE_DIRECTORY};
+    charset ${NGINX_DEFAULT_CHARSET};
+
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_HTTP.log;
+
+    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    location / {
+        if (\$server_port = 80) {
+            rewrite (.*) https://\$host\$request_uri last;
+            break;
+        }
+    }
+
+    # redirect server error pages to the static page /403.html
+    #
+    error_page  403              /403.html;
+    location = /403.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /404.html
+    #
+    error_page  404              /404.html;
+    location = /404.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+}
+
+#### SSL Config.
+##
 server {
 	lisetn      443 ssl;
+    lisetn      [::]:443 ssl;
     # HTTP/2.0
     # listen      443 ssl ${NGINX_V2_MOD};
+    # listen      [::]:443 ssl ${NGINX_V2_MOD};
     # SPDY/3.1
     # listen      443 ssl ${NGINX_SPDY_MOD};
+    # listen      [::]:443 ssl ${NGINX_SPDY_MOD};
     server_name ${CONFIG_HOST_DOMAIN};
 
     # SSL PARAM
@@ -245,7 +293,7 @@ server {
     index ${NGINX_INDEX_FILE_LIST};
     charset ${NGINX_DEFAULT_CHARSET};
 
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}.log;
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_SSL.log;
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
 
@@ -285,7 +333,7 @@ server {
         }
         # Cache Control
         #
-        add_header Cache-Control "public, max-age=86400";
+        add_header Cache-Control "public, max-age=${NGINX_BACKEND_CACHE_RELOAD}";
 
         # Cache Setup
         #
@@ -293,11 +341,11 @@ server {
         if (\$request_method != "GET") {
             set \$do_not_cache    1;
         }
-        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}\|${NGINX_BACKEND_LOGIN})') {
+        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}|${NGINX_BACKEND_LOGIN})') {
             set \$do_not_cache   1;
         }
         # WordPress
-        if (\$http_cookie ~* "comment_author_|wordpress_(?!test_cookie)|wp-postpass_" ) {
+        if (\$http_cookie ~* '(comment_author_|wordpress_(?!test_cookie)|wp-postpass_)' ) {
             set \$do_not_cache   1;
         }
         # Mobile UA Setup
@@ -316,7 +364,7 @@ server {
         proxy_cache_bypass       \$do_not_cache;
         proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
         proxy_cache              cache_${CONFIG_HOST_DOMAIN};
-        proxy_pass               ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        proxy_pass               ${NGINX_SCHEMA}\$host.backend;
 
     }
 
@@ -324,7 +372,7 @@ server {
     # WordPress Admin Directory
     location /${NGINX_BACKEND_DIRECTORY} {
         access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
         # GeoIP
         if (\$allowed_country != yes) {
             return 444;
@@ -337,7 +385,7 @@ server {
 
     location = /${NGINX_BACKEND_LOGIN} {
         access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
         # GeoIP
         if (\$allowed_country != yes) {
             return 444;
@@ -392,64 +440,16 @@ server {
 
     # WordPress Config Files Access Setup
     #
-    location ~ /(wp-config\.php|wp-mail\.php|install\.php|wp-cron\.php) {
+    location ~ /(wp-config\.php|wp-mail\.php|wp-cron\.php|install\.php) {
         allow   127.0.0.1;
         allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
         deny    all;
     }
 }
 EOF
 vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
-# WordPress
-######################################################################
-echo -e "Rewrite Config."
-######################################################################
-# WordPress
-cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rw.conf
-server {
-    listen      80;
-    server_name ${CONFIG_HOST_DOMAIN};
-
-    root   ${APACHE_FILE_DIRECTORY};
-    charset ${NGINX_DEFAULT_CHARSET};
-
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_rw.log;
-
-    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
-
-    location / {
-        if (\$server_port = 80) {
-            rewrite (.*) https://\$host\$request_uri last;
-            break;
-        }
-    }
-
-    # redirect server error pages to the static page /403.html
-    #
-    error_page  403              /403.html;
-    location = /403.html {
-        root   ${APACHE_ERROR_DIRECTORY};
-    }
-
-    # redirect server error pages to the static page /404.html
-    #
-    error_page  404              /404.html;
-    location = /404.html {
-        root   ${APACHE_ERROR_DIRECTORY};
-    }
-
-    # redirect server error pages to the static page /50x.html
-    #
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   ${APACHE_ERROR_DIRECTORY};
-    }
-
-}
-EOF
-vim ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rw.conf
 /usr/sbin/nginx -t
+/usr/sbin/php-fpm -t
 # WordPress
 ############################################################################
 # WordPress
@@ -578,12 +578,61 @@ echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP."
 ############################################################################
 # concrete5
 cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
+#### HTTP Config.
+##
 server {
-	lisetn      443 ssl;
+    listen      80;
+    listen      [::]:80;
+    server_name ${CONFIG_HOST_DOMAIN};
+
+    root   ${APACHE_FILE_DIRECTORY};
+    charset ${NGINX_DEFAULT_CHARSET};
+
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_HTTP.log;
+
+    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    location / {
+        if (\$server_port = 80) {
+            rewrite (.*) https://\$host\$request_uri last;
+            break;
+        }
+    }
+
+    # redirect server error pages to the static page /403.html
+    #
+    error_page  403              /403.html;
+    location = /403.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /404.html
+    #
+    error_page  404              /404.html;
+    location = /404.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   ${APACHE_ERROR_DIRECTORY};
+    }
+
+}
+
+#### SSL Config.
+##
+server {
+    lisetn      443 ssl;
+    lisetn      [::]:443 ssl;
     # HTTP/2.0
     # listen      443 ssl ${NGINX_V2_MOD};
+    # listen      [::]:443 ssl ${NGINX_V2_MOD};
     # SPDY/3.1
     # listen      443 ssl ${NGINX_SPDY_MOD};
+    # listen      [::]:443 ssl ${NGINX_SPDY_MOD};
     server_name ${CONFIG_HOST_DOMAIN};
 
     # SSL PARAM
@@ -597,7 +646,7 @@ server {
     index ${NGINX_INDEX_FILE_LIST};
     charset ${NGINX_DEFAULT_CHARSET};
 
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}.log;
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_SSL.log;
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
 
@@ -637,7 +686,7 @@ server {
         }
         # Cache Control
         #
-        add_header Cache-Control "public, max-age=86400";
+        add_header Cache-Control "public, max-age=${NGINX_BACKEND_CACHE_RELOAD}";
 
         # Cache Setup
         #
@@ -645,11 +694,11 @@ server {
         if (\$request_method != "GET") {
             set \$do_not_cache    1;
         }
-        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}\|${NGINX_BACKEND_LOGIN})') {
+        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}|${NGINX_BACKEND_LOGIN})') {
             set \$do_not_cache   1;
         }
         # concrete5
-        if (\$http_cookie ~* "CONCRETE5|CONCRETE5_INSTALL_TEST|dashboardPanelStatus" ) {
+        if (\$http_cookie ~* '(CONCRETE5|CONCRETE5_INSTALL_TEST|dashboardPanelStatus)' ) {
             set \$do_not_cache   1;
         }
         # Mobile UA Setup
@@ -668,13 +717,13 @@ server {
         proxy_cache_bypass       \$do_not_cache;
         proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
         proxy_cache              cache_${CONFIG_HOST_DOMAIN};
-        proxy_pass               ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+        proxy_pass               ${NGINX_SCHEMA}\$host.backend;
 
         # SSL Admin Area Setup
         # WordPress Admin Directory
         location /(${NGINX_BACKEND_DIRECTORY}) {
             access_log      off;
-            proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+            proxy_pass      ${NGINX_SCHEMA}\$host.backend;
             # GeoIP
             if (\$allowed_country != yes) {
                 return 444;
@@ -687,7 +736,7 @@ server {
 
         location = /${NGINX_BACKEND_LOGIN} {
             access_log      off;
-            proxy_pass      ${NGINX_SCHEMA}\$host.${NGINX_BACKEND_NAME};
+            proxy_pass      ${NGINX_SCHEMA}\$host.backend;
             # GeoIP
             if (\$allowed_country != yes) {
                 return 444;
@@ -729,73 +778,19 @@ server {
         }
     }
 
-    # concrete5 no Admin for HTTP
-    # if (\$uri ~ '/author') {
-    #    rewrite ^(.*)?$ https://\$host last;
-    #    break;
-    # }
-
     # concrete5 Config Files Access Setup
     #
-    #location ~ /(config|install|database.php) {
-    #    allow   127.0.0.1;
-    #    allow   ${SERVER_STATIC_IP_ADDR};
-    #    allow   ${GLOBAL_IP_ADDR};
-    #    deny    all;
-    #}
+    location ~ /(config|database.php) {
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        deny    all;
+    }
 
 }
 EOF
 vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
-# concrete5
-######################################################################
-echo -e "Rewrite Config."
-######################################################################
-# concrete5
-cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rw.conf
-server {
-    listen      80;
-    server_name ${CONFIG_HOST_DOMAIN};
-
-    root   ${APACHE_FILE_DIRECTORY};
-    charset ${NGINX_DEFAULT_CHARSET};
-
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_rw.log;
-
-    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
-
-    location / {
-        if (\$server_port = 80) {
-            rewrite (.*) https://\$host\$request_uri last;
-            break;
-        }
-    }
-
-    # redirect server error pages to the static page /403.html
-    #
-    error_page  403              /403.html;
-    location = /403.html {
-        root   ${APACHE_ERROR_DIRECTORY};
-    }
-
-    # redirect server error pages to the static page /404.html
-    #
-    error_page  404              /404.html;
-    location = /404.html {
-        root   ${APACHE_ERROR_DIRECTORY};
-    }
-
-    # redirect server error pages to the static page /50x.html
-    #
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   ${APACHE_ERROR_DIRECTORY};
-    }
-
-}
-EOF
-vim ${NGINX_CONFIG_DIRECTORY}/11-${CONFIG_HOST_DOMAIN}-rw.conf
 /usr/sbin/nginx -t
+/usr/sbin/php-fpm -t
 # concrete5
 ############################################################################
 # concrete5
@@ -815,6 +810,7 @@ fi
 ############################################################################
 clear
 /usr/sbin/nginx -t
+/usr/sbin/php-fpm -t
 echo -e "Jp: Webサーバを再起動しますか？ [y/n]"
 echo -e "En: Do you want to restart the Web server? [y/n]"
 read WP_WEBSERVER_RESTART

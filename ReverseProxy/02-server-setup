@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-70 v1.0.1
+#### lnmp-70 v1.0.2
 ############################################################################
 source ./initfile.txt
 source ./default.txt
@@ -81,20 +81,36 @@ sed -i "s|^user = apache$|user = ${WEB_SERVER_SYSTEM_USER_GROUP}|g" /etc/php-fpm
 sed -i "s|^group = apache$|group = ${WEB_SERVER_SYSTEM_USER_GROUP}|g" /etc/php-fpm.d/www.conf
 sed -i 's|^;listen.mode|listen.mode|g' /etc/php-fpm.d/www.conf
 sed -i 's|^pm = dynamic|pm = static|g' /etc/php-fpm.d/www.conf
-sed -i "s|^pm.max_children = 50|pm.max_children = 10|g" /etc/php-fpm.d/www.conf
-sed -i "s|^;pm.max_requests = 500|pm.max_requests = 500|g" /etc/php-fpm.d/www.conf
+sed -i "s|^pm.max_children = 50|pm.max_children = ${PHP_FPM_MAX_CHILDREN}|g" /etc/php-fpm.d/www.conf
+sed -i "s|^;pm.max_requests = 500|pm.max_requests = ${PHP_FPM_MAX_REQUEST}|g" /etc/php-fpm.d/www.conf
+sed -i "s|^php_admin_value\[error_log\]|;\0|g" /etc/php-fpm.d/www.conf
+sed -i "413a\php_admin_value[error_log] = /var/www/logs/phpfpm_error.log" /etc/php-fpm.d/www.conf
 vim /etc/php-fpm.d/www.conf
 # PHP.ini Edit
 #
 echo -e "Jp: PHP.iniを編集します。"
 echo -e "En: You will edit the PHP.ini."
+cp /etc/php.ini /etc/php.ini.origin
+sed -i "s|^; error_reporting|error_reporting|g" /etc/php.ini
+sed -i "s|^error_reporting|error_reporting E_ALL \n& E_STRICT|g" /etc/php.ini
+sed -i "s|^display_errors = Off|display_errors = On|g" /etc/php.ini
+sed -i "s|^;error_log = php_errors.log|error_log = /var/www/logs/php_error.log|g" /etc/php.ini
 sed -i "s|^memory_limit = 128M|memory_limit = ${PHP_MEM_LIMIT}|g" /etc/php.ini
 sed -i "s|^post_max_size = 8M|post_max_size = ${PHP_POST_MAX}|g" /etc/php.ini
 sed -i "s|^upload_max_filesize = 2M|upload_max_filesize = ${PHP_UPLOAD_MAX}|g" /etc/php.ini
 sed -i "s|^expose_php = On|expose_php = ${PHP_EXPOSE}|g" /etc/php.ini
+sed -i "s|^session.hash_function = 0|session.hash_function = 1|g" /etc/php.ini
+sed -i "s|^;session.entropy_file = /dev/urandom|session.entropy_file = /dev/urandom|g" /etc/php.ini
+sed -i "s|^;session.entropy_length = 32|session.entropy_length = 32|g" /etc/php.ini
 sed -i "s|^;date.timezone =|date.timezone = \"${PHP_DATE_TIMEZONE}\"|g" /etc/php.ini
 sed -i "s|^;session.cookie_secure =|session.cookie_secure = ${PHP_SESSION_COOKIE}|g" /etc/php.ini
 sed -i "s|^session.cookie_domain =|;\0|g" /etc/php.ini
+sed -i "s|^;mbstring.language = Japanese|mbstring.language = Japanese|g" /etc/php.ini
+sed -i "s|^;mbstring.internal_encoding =|mbstring.internal_encoding = ${SERVER_DEFAULT_CHARSET}|g" /etc/php.ini
+sed -i "s|^;mbstring.encoding_translation = Off|mbstring.encoding_translation = Off|g" /etc/php.ini
+sed -i "s|^;mbstring.http_input =|mbstring.http_input = pass|g" /etc/php.ini
+sed -i "s|^;mbstring.http_output =|mbstring.http_output = pass|g" /etc/php.ini
+sed -i "s|^;mbstring.detect_order = auto|mbstring.detect_order = auto|g" /etc/php.ini
 vim /etc/php.ini
 ####
 clear
@@ -265,15 +281,16 @@ if [ ${set_nginx_setup} = "y" ] ; then
 ######################################################################
 echo -e "Nginx Default Setting."
 sed -i "s|^user nginx|user ${WEB_SERVER_SYSTEM_USER_GROUP}|g" /etc/nginx/nginx.conf
-#sed -i "s|^worker_processes 1|worker_processes ${NGINX_WORKER_PROCESSES}|g" /etc/nginx.conf
-sed -i "s|^worker_processes 1|worker_processes $(cat /proc/cpuinfo | grep processor | wc -l)|g" /etc/nginx.conf
+sed -i "s|^worker_processes 1|worker_processes ${NGINX_WORKER_PROCESSES}|g" /etc/nginx.conf
 sed -i "3a\#worker_cpu_affinity ${NGINX_WORKER_CPU_AFFINITY};" /etc/nginx/nginx.conf
 sed -i "4a\#worker_priority ${NGINX_WORKER_PRIORITY};" /etc/nginx/nginx.conf
 sed -i "s|^error_log /var/log/nginx/error.log|error_log ${APACHE_LOG_DIRECTORY}/nginx_error.log|g" /etc/nginx/nginx.conf
 sed -i "s|access_log  /var/log/nginx/access.log  main|access_log  ${APACHE_LOG_DIRECTORY}/nginx_access.log  main|g" /etc/nginx/nginx.conf
 sed -i "s|keepalive_timeout   65|keepalive_timeout   ${NGINX_KEEPALIVE_TIMEOUT}|g" /etc/nginx/nginx.conf
-sed -i "28a\    server_tokens       off;" /etc/nginx/nginx.conf
-sed -i "29a\    #etag                off;" /etc/nginx/nginx.conf
+sed -i "s|\"\$request\"|\"\$request\" \"\$uri\" |g" /etc/nginx/nginx.conf
+sed -i "s|#tcp_nopush     on|tcp_nopush      on|g" /etc/nginx/nginx.conf
+sed -i "28a\    server_tokens     off;" /etc/nginx/nginx.conf
+sed -i "29a\    #etag             off;" /etc/nginx/nginx.conf
 vim /etc/nginx/nginx.conf
 /usr/sbin/nginx -t
 ############################################################################
