@@ -5,7 +5,7 @@
 source ./initfile.txt
 ####
 rm -f ${INSTALL_PATH}/*.sh
-rm -f ${INSTALL_PATH}/{default.txt,server.txt,cms.txt,nginx-build.txt,*.md,.gitignore}
+rm -f ${INSTALL_PATH}/{default.txt,server.txt,cms.txt,nginx-build.txt,*.md,.gitignore,startup}
 rm -fr ${INSTALL_PATH}/{ReverseProxy,text,.git}
 
 cat <<EOF > /home/${USER_NAME}/check.sh

@@ -114,8 +114,13 @@ clear
 ############################################################################
 echo -e "Nginx: ${CONFIG_HOST_DOMAIN} / SSL Setup"
 # DH PARAM
-echo -e "DH PARAM SETUP."
-openssl dhparam -out ${FRONT_SSL_DH} ${FRONT_SSL_BIT}
+echo -e "DH PARAM SETUP. 2048bit [y] / 4096bit [n]"
+read SETDHPARAM
+if [ ${SETDHPARAM} = "y" ] ; then
+openssl dhparam -out ${FRONT_SSL_DH} ${FRONT_SSL_BIT_NORMAL}
+else
+openssl dhparam -out ${FRONT_SSL_DH} ${FRONT_SSL_BIT_SECURE}
+fi
 chown nginx ${FRONT_SSL_DH}
 chmod 700 ${FRONT_SSL_DH}
 ############################################################################
