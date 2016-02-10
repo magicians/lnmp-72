@@ -137,7 +137,6 @@ cat <<EOF > /etc/nginx/https_param
 
     ssl_session_cache shared:SSL:${FRONT_SSL_SESSION};
     ssl_session_timeout          ${FRONT_SSL_SESSION};
-    keepalive_timeout            ${FRONT_SSL_KEEPALIVE_TIME};
 
     ssl_protocols ${ALL_SSL_PROTOCOLS};
     ssl_ciphers ${ALL_SSL_CIPHERS};
@@ -145,8 +144,8 @@ cat <<EOF > /etc/nginx/https_param
     ssl_stapling                 on;
     ssl_stapling_verify          on;
     ssl_trusted_certificate      ${FRONT_SSLCA_CERT};
-    resolver                     ${SETUP_VPS_DNS_PRI_IP} ${SETUP_VPS_DNS_SEC_IP} valid=${NGINX_RESOLVER_RELOAD};
-    resolver_timeout             ${FRONT_SSL_KEEPALIVE_TIME};
+    resolver                     ${SETUP_VPS_DNS_PRI_IP} ${SETUP_VPS_DNS_SEC_IP} valid=300s;
+    resolver_timeout             10s;
 EOF
 vim /etc/nginx/https_param
 ############################################################################
