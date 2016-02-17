@@ -6,7 +6,7 @@ CentOS7.2 + Nginx + MariaDB + PHP7
 ** 2. ** Edit / install/initfile.txt  
 ** 3. ** Edit / install/text/\*.txt  
 ** 4. ** Shell / cd install/ sh startup  
-** 5. ** Shell / sudo ./NA01-DEF.sh && ./NA02-WEB.sh reboot  
+** 5. ** Shell / sudo ./NA01-DEF.sh && ./NA02-WEB.sh && reboot  
 ** 6. ** Shell / ssh login: sudo ./NA03-CMS.sh (PHP install / User Dir = ./NGXBUILD.sh)  
 ** 7. ** Shell / sudo ./last_optimization  
 ** 8. ** rm -fr install  
