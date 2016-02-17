@@ -33,4 +33,4 @@ NGX_BUILD_SRPM=nginx-${NGX_BUILD_VERSION_SRPM}-${NGX_BUILD_VERSION_RE_SRPM}\.el7
 # nginx.org
 #
 NGX_BUILD_SOURCE=nginx-${NGX_BUILD_VERSION_SOURCE}\.tar\.gz
-#
+###############################################################################

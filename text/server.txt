@@ -1,6 +1,6 @@
 #### lnmp-70 v1.0.2
 ###############################################################################
-## 2.WebServer Environment Variable.
+## 2.WebServer Environment Variable. / Backend --
 ###############################################################################
 ## -- 2-1. HostName Setup Config.
 # -- HOST DOMAIN
@@ -24,7 +24,7 @@ PHP_FPM_MAX_CHILDREN=10
 PHP_FPM_MAX_REQUEST=500
 #
 ###############################################################################
-## 2-2. SSL Setup Config.
+## 2-2. SSL Setup Config. / SSL --
 ###############################################################################
 # -- SSL Cert Path.
 #FRONT_SSL_CERT=/etc/pki/tls/cert/localhost.crt
@@ -70,7 +70,7 @@ ALL_SSL_CIPHERS=HIGH:!aNULL:!MD5
 ## Mozilla Intermediate Compatibility Profile Middle Security End. --
 ####
 ###############################################################################
-## 2-3. WebServer Setup Config.
+## 2-3. WebServer Setup Config. / WebServer Directory --
 ###############################################################################
 # -- Web Server User and Group.
 WEB_SERVER_SYSTEM_USER_GROUP=nginx
@@ -89,7 +89,7 @@ APACHE_ERROR_DIRECTORY=/var/www/error
 APACHE_MOD_EXTRACT_FORWARDED=git://github.com/matsumoto-r/mod_extract_forwarded_for_2.4
 #
 ###############################################################################
-## 2-4. LAMP and LNMP / PHP.init Setup Config.
+## 2-4. LAMP and LNMP / PHP.init Setup Config. / PHP --
 ###############################################################################
 # -- PHP.ini Edit.
 # -- Memory Limit.
@@ -106,7 +106,7 @@ PHP_DATE_TIMEZONE=Asia/Tokyo
 PHP_SESSION_COOKIE=On
 #
 ###############################################################################
-## 2-5. LNMP / GeoIP Setup Config.
+## 2-5. LNMP / GeoIP Setup Config. / GeoIP --
 ###############################################################################
 # -- GeoIP Path.
 GEOIP_COUNTRY=JP
@@ -115,7 +115,7 @@ GEOIP_FILE=GeoIP.dat
 GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
 #
 ###############################################################################
-## 2-6. LNMP / Nginx Setup Config.
+## 2-6. LNMP / Nginx Setup Config. / Nginx --
 ###############################################################################
 # -- Nginx Worker Process xx
 #NGINX_WORKER_PROCESSES=1
@@ -155,7 +155,6 @@ NGINX_PROXY_CACHE_TEMP=/var/www/tmp
 NGINX_HEADER_X_FRAME_OPT=DENY
 NGINX_HEADER_X_CONTENT_TYPE_OPT=nosniff
 NGINX_HEADER_X_XSS_PROTECT=1\;\ mode=block
-#NGINX_HEADER_CONTENT_SP=default-src\ \'self\'
 NGINX_HEADER_CONTENT_SP=default-src\ \'self\'\;\ script-src\ \'self\'\ \'unsafe-inline\'\ \'unsafe-eval\'\ https\:\/\/ssl\.google-analytics\.com\;\ img-src\ \'self\'\ https\:\/\/ssl\.google-analytics\.com\;\ style-src\ \'self\'\ \'unsafe-inline\'\ https\:\/\/fonts\.googleapis\.com\ \'self\'\ https\:\/\/themes\.googleusercontent\.com\;\ frame-src\ \'none\'\ object-src\ \'none\'
 #
 # -- Nginx Client Buffer Setup.

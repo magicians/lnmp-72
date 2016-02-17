@@ -147,6 +147,9 @@ cat <<EOF > /etc/nginx/https_param
     ssl_stapling_verify          on;
     ssl_trusted_certificate      ${FRONT_SSLCA_CERT};
     resolver                     ${SETUP_VPS_DNS_PRI_IP} ${SETUP_VPS_DNS_SEC_IP} valid=300s;
+
+    # TERTIARY DNS: ${SETUP_VPS_DNS_TER_IP}
+
     resolver_timeout             10s;
 EOF
 vim /etc/nginx/https_param

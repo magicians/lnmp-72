@@ -1,6 +1,6 @@
 #### lnmp-70 v1.0.2
 ###############################################################################
-## 2-7. MariaDB Setup Config.
+## 2-7. MariaDB Setup Config. / DB --
 ###############################################################################
 #
 # -- Database root Passwd.
@@ -16,7 +16,7 @@ CREATE_DB_NAME=
 DB_USER_NAME=
 #
 ###############################################################################
-## 3. OPTION - WordPress Install. -
+## 3. OPTION - WordPress Install. / WP --
 ###############################################################################
 # -- Install Host
 WP_SCHEMA=${NGINX_SCHEMA}
@@ -33,6 +33,8 @@ WP_CONF_DIR=manager
 WP_DB_UNIX_PATH=localhost:/var/lib/mysql/mysql.sock
 # -- WP DB PREFIX
 WP_DB_PREFIX=wp_
+###############################################################################
+## 3. OPTION - concrete5 Install. / c5 --
 ###############################################################################
 # -- Install Host
 C5_SCHEMA=${NGINX_SCHEMA}
