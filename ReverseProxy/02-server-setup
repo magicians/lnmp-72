@@ -26,6 +26,9 @@ echo -e "En: It will install the PHP7.x"
 yum --enablerepo=remi,remi-php70 install php \
 php-cli \
 php-devel \
+php-common \
+php-ldap \
+php-pdo \
 php-mbstring \
 php-gd \
 php-pear \
@@ -43,6 +46,9 @@ echo -e "En: It will install the PHP5.6"
 yum --enablerepo=remi,remi-php56 install php \
 php-cli \
 php-devel \
+php-common \
+php-ldap \
+php-pdo \
 php-mbstring \
 php-gd \
 php-pear \
@@ -81,8 +87,8 @@ vim /etc/php-fpm.d/www.conf
 echo -e "Jp: PHP.iniを編集します。"
 echo -e "En: You will edit the PHP.ini."
 cp /etc/php.ini /etc/php.ini.origin
-sed -i "s|^; error_reporting|error_reporting|g" /etc/php.ini
-sed -i "s|^error_reporting|error_reporting E_ALL \n& E_STRICT|g" /etc/php.ini
+#sed -i "s|^; error_reporting|error_reporting|g" /etc/php.ini
+#sed -i "s|^error_reporting|error_reporting E_STRICT|g" /etc/php.ini
 sed -i "s|^display_errors = Off|display_errors = On|g" /etc/php.ini
 sed -i "s|^;error_log = php_errors.log|error_log = /var/www/logs/php_error.log|g" /etc/php.ini
 sed -i "s|^memory_limit = 128M|memory_limit = ${PHP_MEM_LIMIT}|g" /etc/php.ini
