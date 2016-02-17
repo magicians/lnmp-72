@@ -120,11 +120,12 @@ echo ":OUTPUT ACCEPT [0:0]" >> \$IPTABLES_CONF_TMP
 echo "-A OUTPUT -o lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
 echo "-A INPUT -i lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
-#ICMP
+#ICMP ACCEPT
 echo "-A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-name t_icmp --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #ICMP さくらのシンプル監視のみ許可
+#echo "-A INPUT -s 61.211.224.144/28 -p icmp -j ACCEPT" >> \$IPTABLES_CONF_TMP
 #echo "-A INPUT -s 61.211.224.144/28 -p tcp -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 #echo "-A INPUT -s 61.211.224.144/28 -p tcp -m tcp --dport 443 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
