@@ -3,7 +3,7 @@ CentOS7.2 + Nginx + MariaDB + PHP7
 
 ## Setup
 ** 1. ** git clone git://github.com/hisanuco/lnmp-72.git install  
-** 2. ** Edit / install/initfile.txt  
+** 2. ** Edit / install/initfile  
 ** 3. ** Edit / install/text/\*.txt  
 ** 4. ** Shell / cd install/ sh startup  
 ** 5. ** Shell / sudo ./NA01-DEF.sh && ./NA02-WEB.sh && reboot  

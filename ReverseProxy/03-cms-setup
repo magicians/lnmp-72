@@ -1,7 +1,7 @@
 #!/bin/bash
-#### lnmp-70 v1.0.2
+#### lnmp-72 v1.0.2
 ############################################################################
-source ./initfile.txt
+source ./initfile
 source ./default.txt
 source ./server.txt
 source ./cms.txt

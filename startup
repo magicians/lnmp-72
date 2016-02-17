@@ -1,8 +1,8 @@
 #!/bin/bash
-#### lnmp-70 v1.0.2
-source ./initfile.txt
+#### lnmp-72 v1.0.2
+source ./initfile
 ####
-chmod 600 ${INSTALL_PATH}/initfile.txt
+chmod 600 ${INSTALL_PATH}/initfile
 chmod 600 ${INSTALL_PATH}/text/*.txt
 ln -s ${INSTALL_PATH}/text/default.txt ${INSTALL_PATH}/default.txt
 ln -s ${INSTALL_PATH}/text/server.txt ${INSTALL_PATH}/server.txt

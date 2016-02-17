@@ -1,11 +1,11 @@
 #!/bin/bash
-#### lnmp-70 v1.0.2
+#### lnmp-72 v1.0.2
 ## rkhunter new hash. rkhunterがスキャンする際に利用するハッシュの新規生成。
 #
-source ./initfile.txt
+source ./initfile
 ####
 rm -f ${INSTALL_PATH}/*.sh
-rm -f ${INSTALL_PATH}/{default.txt,server.txt,cms.txt,nginx-build.txt,*.md,.gitignore,startup}
+rm -f ${INSTALL_PATH}/{*.txt,*.md,.gitignore,startup}
 rm -fr ${INSTALL_PATH}/{ReverseProxy,text,.git}
 
 cat <<EOF > /home/${USER_NAME}/check.sh
