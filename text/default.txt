@@ -30,6 +30,12 @@ LOCAL_IP_HOSTS=192.168.1.
 # -- Global IP. / Provider Host. --
 GLOBAL_ACCESS_HOSTS=
 #
+# -- Sakura Simple Monitoring
+MONITORING_SERVER_IPADDR=61.211.224.144/28
+#
+# -- denyhosts Allowed-hosts File Path.
+DENYHOSTS_ALLOWED_PATH=/var/lib/denyhosts/allowed-hosts
+#
 # -- Default Language
 SERVER_DEFAULT_LANG=ja_JP.UTF-8
 #

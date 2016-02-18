@@ -125,9 +125,9 @@ echo "-A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-name t_icmp --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #ICMP さくらのシンプル監視のみ許可
-#echo "-A INPUT -s 61.211.224.144/28 -p icmp -j ACCEPT" >> \$IPTABLES_CONF_TMP
-#echo "-A INPUT -s 61.211.224.144/28 -p tcp -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-#echo "-A INPUT -s 61.211.224.144/28 -p tcp -m tcp --dport 443 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s ${MONITORING_SERVER_IPADDR} -p icmp -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s ${MONITORING_SERVER_IPADDR} -p tcp -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s ${MONITORING_SERVER_IPADDR} -p tcp -m tcp --dport 443 -j ACCEPT" >> \$IPTABLES_CONF_TMP
 
 #パケットチェック
 echo "-A INPUT -p 50 -j ACCEPT" >> \$IPTABLES_CONF_TMP
@@ -252,6 +252,16 @@ if [ ${set_globaliptables_param} = "y" ] ; then
 	# グローバル環境では使わない。※ ローカル環境専用
 	sed -i "s|echo \"-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPTABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.iptables_setup
 	sed -i "s|echo \"-A INPUT -d ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPTABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.iptables_setup
+fi
+clear
+echo -e "Jp: さくらのシンプル監視のご利用について？ : 未使用 [ y ] / 利用 [ n ]"
+echo -e "En: About the use of Sakura of simple monitoring? : Unused [y] / use [n]"
+read set_sakura_simple_monitoring
+if [ ${set_sakura_simple_monitoring} = "y" ] ; then
+	sed -i "s|^echo \"-A INPUT -s ${MONITORING_SERVER_IPADDR} -p|#\0|g" /home/${USER_NAME}/.iptables_setup
+else
+	sed -i "s|^echo \"-A INPUT -p icmp -m icmp --icmp-type 0|#\0|g" /home/${USER_NAME}/.iptables_setup
+	sed -i "s|^echo \"-A INPUT -p icmp -m icmp --icmp-type 8|#\0|g" /home/${USER_NAME}/.iptables_setup
 fi
 vi /home/${USER_NAME}/.iptables_setup
 ## ユーザディレクトリに保存したセットアップ・シェルスクリプトのアクセス権を変更。
@@ -393,6 +403,12 @@ yum -y install denyhosts
 #
 ############################################################################
 #
+echo -e "Sakura Simple Monitoring Setup?"
+read set_sakurasms
+if [ ${set_sakurasms} = "y" ] ; then
+echo "${MONITORING_SERVER_IPADDR}" >> ${DENYHOSTS_ALLOWED_PATH}
+vim ${DENYHOSTS_ALLOWED_PATH}
+fi
 systemctl enable denyhosts
 systemctl start denyhosts
 #
