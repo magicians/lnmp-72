@@ -1,0 +1,16 @@
+#### lnmp-72 v1.0.2
+###############################################################################
+## 2-8. Referrer Spam List. --
+###############################################################################
+RefererSpam00=с.новым.годом.рф
+RefererSpam01=o-o-8-o-o
+RefererSpam02=happy.new.yeartwit.com
+RefererSpam03=traffic2cash.xyz
+RefererSpam04=free-social-buttons.xyz
+RefererSpam05=social-widget.xyz
+RefererSpam06=share-buttons.xyz
+RefererSpam07=website-analyzer.info
+RefererSpam08=trafficgenius.xyz
+RefererSpam09=topseoservice.co
+RefererSpam10=website-analyzer.info
+RefererSpam11=googlemare.com

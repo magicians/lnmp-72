@@ -4,6 +4,7 @@
 source ./initfile
 source ./default.txt
 source ./server.txt
+source ./deny_spam.txt
 source ./cms.txt
 ############################################################################
 clear
@@ -183,6 +184,54 @@ cat <<EOF> /etc/nginx/spdy_param
 EOF
 vim /etc/nginx/spdy_param
 fi
+## Referer Spam
+echo -e "Referer Spam Deny"
+cat <<EOF > /etc/nginx/referrer_deny
+set $referrerspam 0;
+
+if ( $http_referer ~* '${RefererSpam00}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam01}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam02}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam03}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam04}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam05}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam06}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam07}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam08}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam09}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam10}' ){
+  set $referrerspam 1;
+}
+if ( $http_referer ~* '${RefererSpam11}' ){
+  set $referrerspam 1;
+}
+# Deny of ReferrerSpam
+if ( $referrerspam = 1) {
+  return 444;
+}
+EOF
+vim /etc/nginx/referrer_deny
+#
 ############################################################################
 echo -e "CMS Install for WordPress [y] / concrete5 [n]"
 read set_cms_wpinstall
@@ -366,6 +415,10 @@ server {
         if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
             set \$mobile ".sp";
         }
+
+        # Referrer Spam Deny
+        #
+        include referrer_deny;
 
         # REVERSE PROXY SETUP
         #
@@ -719,6 +772,10 @@ server {
         if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
             set \$mobile ".sp";
         }
+
+        # Referrer Spam Deny
+        #
+        include referrer_deny;
 
         # REVERSE PROXY SETUP
         #
