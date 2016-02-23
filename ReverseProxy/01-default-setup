@@ -67,7 +67,7 @@ sed -i "s|^#Port 22$|Port $SSH_EDIT_PORT|" /etc/ssh/sshd_config
 ## SSH rootでのログインを不可にする
 sed -i "s|^#PermitRootLogin yes|PermitRootLogin no|" /etc/ssh/sshd_config
 ## SSH 空パスワードによるログインを不可にする
-sed -i "s|^#PermitEmptyPasswords no$|PermitEmptyPasswords no|g" /etc/ssh/sshd_config
+#sed -i "s|^#PermitEmptyPasswords no$|PermitEmptyPasswords no|g" /etc/ssh/sshd_config
 ## SSH 公開鍵での接続を有効化する
 sed -i "s|^#PubkeyAuthentication yes|PubkeyAuthentication yes|" /etc/ssh/sshd_config
 ## SSH パスワードによるログインを不可にする
