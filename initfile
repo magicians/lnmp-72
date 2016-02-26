@@ -3,7 +3,8 @@
 # -- 1. Path Environment Variable.
 ###############################################################################
 # -- Setup UserName. --
-USER_NAME=username
+USER_NAME=root
+#USER_NAME=
 #
 # -- Install Shell Script Path.
 INSTALL_PATH=/home/${USER_NAME}/install

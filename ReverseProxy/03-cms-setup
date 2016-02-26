@@ -73,10 +73,7 @@ cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
     #default upstream setup.
     upstream ${CONFIG_HOST_DOMAIN}.backend {
             ip_hash;
-            # Backend for Apache.
-            #server      ${BACKEND_SERVER_PORT};
-            # PHP-FPM UNIX SOCKET
-            server      unix:${BACKEND_LISTEN_SOCK};
+            server      ${BACKEND_SERVER_PORT};
             keepalive   ${NGINX_KEEPALIVE_UPSTREAM};
     }
 EOF
@@ -328,6 +325,38 @@ server {
 
 }
 
+#### Backend Config.
+##
+server {
+    lisetn      ${REVERSE_PROXY_PORT} ssl;
+    lisetn      [::]:${REVERSE_PROXY_PORT} ssl;
+    server_name _;
+
+    # SSL PARAM
+    include https_param;
+
+    root   ${APACHE_FILE_DIRECTORY};
+    index ${NGINX_INDEX_FILE_LIST};
+    charset ${NGINX_DEFAULT_CHARSET};
+
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_BK.log;
+
+    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    gzip         off;
+    gzip_vary    off;
+
+    # Permalink Setup
+    # WordPress
+    #
+    include wp_permalink;
+
+    # php-fpm Setup
+    #
+    include php_fpmd;
+
+}
+
 #### SSL Config.
 ##
 server {
@@ -372,14 +401,54 @@ server {
         break;
     }
 
-    # php-fpm Setup
-    #
-    include php_fpmd;
+    # SSL Admin Area Setup
+    # WordPress Admin Directory
+    location /${NGINX_BACKEND_DIRECTORY} {
+        access_log      off;
+        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
+        # GeoIP
+        if (\$allowed_country != yes) {
+            return 444;
+        }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+    }
 
-    # Permalink Setup
-    # WordPress
-    #
-    include wp_permalink;
+    location = /${NGINX_BACKEND_LOGIN} {
+        access_log      off;
+        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
+        # GeoIP
+        if (\$allowed_country != yes) {
+            return 444;
+        }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+    }
+
+    location ~ /xmlrpc.php {
+        valid_referers    *.wordpress.com;
+        if ($invalid_referer) {
+            return 444;
+        }
+        proxy_pass      https://$host.backend;
+    }
+
+    location ~ /uploads/ {
+        valid_referers    ${NGINX_REFERERS_URI};
+        if ($invalid_referer) {
+            return 403;
+        }
+    }
+
+    # WordPress no Admin for HTTP
+    if (\$uri ~ '/author') {
+        rewrite ^(.*)?$ https://\$host last;
+        break;
+    }
 
     # Proxy Setup
     location / {
@@ -433,49 +502,6 @@ server {
 
     }
 
-    # SSL Admin Area Setup
-    # WordPress Admin Directory
-    location /${NGINX_BACKEND_DIRECTORY} {
-        access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
-        # GeoIP
-        if (\$allowed_country != yes) {
-            return 444;
-        }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
-    }
-
-    location = /${NGINX_BACKEND_LOGIN} {
-        access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
-        # GeoIP
-        if (\$allowed_country != yes) {
-            return 444;
-        }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
-    }
-
-    location ~ /xmlrpc.php {
-        valid_referers    wordpress.com;
-        if ($invalid_referer) {
-            return 444;
-        }
-        proxy_pass      https://$host.backend;
-    }
-
-    location ~ /uploads/ {
-        valid_referers    ${NGINX_REFERERS_URI};
-        if ($invalid_referer) {
-            return 403;
-        }
-    }
-
     # redirect server error pages to the static page /403.html
     #
     error_page  403              /403.html;
@@ -495,12 +521,6 @@ server {
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
         root   ${APACHE_ERROR_DIRECTORY};
-    }
-
-    # WordPress no Admin for HTTP
-    if (\$uri ~ '/author') {
-        rewrite ^(.*)?$ https://\$host last;
-        break;
     }
 
     # WordPress Config Files Access Setup

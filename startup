@@ -8,6 +8,7 @@ ln -s ${INSTALL_PATH}/text/default.txt ${INSTALL_PATH}/default.txt
 ln -s ${INSTALL_PATH}/text/server.txt ${INSTALL_PATH}/server.txt
 ln -s ${INSTALL_PATH}/text/cms.txt ${INSTALL_PATH}/cms.txt
 ln -s ${INSTALL_PATH}/text/nginx-build.txt ${INSTALL_PATH}/nginx-build.txt
+ln -s ${INSTALL_PATH}/text/deny_spam.txt ${INSTALL_PATH}/deny_spam.txt
 chmod 400 ${INSTALL_PATH}/last_optimization
 ##############################################
 #echo -e "LAMP(Linux, Apache, MariaDB, PHP)でインストールしますか？ [y]"
@@ -19,9 +20,9 @@ if [ ${instaltolamp} = "y" ] ; then
 ### LAMP Mode Install Start.
 ### Nginx+Apache Mode Install Start.
 ##############################################
-ln -s ${INSTALL_PATH}/ReverseProxy/01-default-setup ${INSTALL_PATH}/NA01-DEF.sh
-ln -s ${INSTALL_PATH}/ReverseProxy/02-server-setup ${INSTALL_PATH}/NA02-WEB.sh
-ln -s ${INSTALL_PATH}/ReverseProxy/03-cms-setup ${INSTALL_PATH}/NA03-CMS.sh
-chmod -R +x ${INSTALL_PATH}/{NA01-DEF.sh,NA02-WEB.sh,NA03-CMS.sh,NGXBUILD.sh}
+ln -s ${INSTALL_PATH}/Webserver/01-default-setup ${INSTALL_PATH}/01.DEFAULT-SETUP.sh
+ln -s ${INSTALL_PATH}/Webserver/02-server-setup ${INSTALL_PATH}/O2.WEBSERVER-SETUP.sh
+ln -s ${INSTALL_PATH}/Webserver/03-cms-setup ${INSTALL_PATH}/03.DB-SETUP.sh
+chmod -R +x ${INSTALL_PATH}/*.sh
 ##############################################
 fi
