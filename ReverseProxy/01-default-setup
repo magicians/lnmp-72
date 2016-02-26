@@ -1,5 +1,5 @@
-#!/bin/sh
-#### lnmp-72 v1.0.2
+#!/bin/bash
+#### lamp-72c v1.0.0
 ############################################################################
 source ./initfile
 source ./default.txt
@@ -12,29 +12,18 @@ read set_localnet
 ####
 if [ ${set_localnet} = "y" ] ; then
 #### 接続先を固定する、他からの接続は原則拒否推奨。
-echo -e "Jp:(/etc/hosts.allow) サーバのインストール先はローカルネットワークですか？ [y/n]"
-echo -e "En:(/etc/hosts.allow) Server installation destination Is the local network? [y/n]"	
-read set_hostsallow
-########
-if [ ${set_hostsallow} = "y" ] ; then
-# ローカル環境での設定
-echo "sshd: ${LOCAL_IP_HOSTS}" >> /etc/hosts.allow
-else
-echo -e "Jp: 接続は固定IPですか？ [y/n]"
-echo -e "En: Is the connection fixed IP? [y/n]"
+echo -e "Jp: 接続は固定IPですか？ [y]"
+echo -e "En: Is the connection fixed IP? [y]"
 read set_connection_ip
 ############
 if [ ${set_connection_ip} = "y" ] ; then
 # 固定IPによる接続
 	echo "sshd: ${GLOBAL_IP_ADDR}" >> /etc/hosts.allow
-else
-	echo "sshd: ${GLOBAL_ACCESS_HOSTS}" >> /etc/hosts.allow
+	echo "ALL: ALL" >> /etc/hosts.deny
 fi
 ############
 fi
-########
-echo "ALL: ALL" >> /etc/hosts.deny
-fi
+vi /etc/hosts.allow && vi /etc/hosts.deny
 ####
 ############################################################################
 #### アクセス権限をユーザに付与。
@@ -66,6 +55,7 @@ if [ ${set_sshdconfig} = "y" ] ; then
 sed -i "s|^#Port 22$|Port $SSH_EDIT_PORT|" /etc/ssh/sshd_config
 ## SSH rootでのログインを不可にする
 sed -i "s|^#PermitRootLogin yes|PermitRootLogin no|" /etc/ssh/sshd_config
+sed -i "s|^PermitRootLogin yes|PermitRootLogin no|" /etc/ssh/sshd_config
 ## SSH 空パスワードによるログインを不可にする
 #sed -i "s|^#PermitEmptyPasswords no$|PermitEmptyPasswords no|g" /etc/ssh/sshd_config
 ## SSH 公開鍵での接続を有効化する
@@ -93,6 +83,7 @@ systemctl stop firewalld
 systemctl disable firewalld
 systemctl start iptables
 systemctl enable iptables
+systemctl is-enabled iptables
 fi
 # iptablesセットアップ
 echo -e "Jp: iptablesセットアップ [y] / 既に一回このシェルを通している場合は [n]"
@@ -101,147 +92,188 @@ read set_iptables_param
 if [ ${set_iptables_param} = "y" ] ; then
 # iptables setup.
 echo -e "iptables setup."
-cat <<EOF > /home/${USER_NAME}/.iptables_setup
+cat <<EOF > /home/${USER_NAME}/.ipv4tables_setup
 #!/bin/bash
 
 #COMMIT File
-IPTABLES_CONF_TMP=\`mktemp\`
+IPv4_TABLES_CONF_TMP=\`mktemp\`
 
 #iptablesの停止
 systemctl stop iptables
 
 #COMMIT Start
-echo "*filter" >> \$IPTABLES_CONF_TMP
+echo "*filter" >> \$IPv4_TABLES_CONF_TMP
 #デフォルトルール
 
-echo ":INPUT DROP [0:0]" >> \$IPTABLES_CONF_TMP
-echo ":FORWARD DROP [0:0]" >> \$IPTABLES_CONF_TMP
-echo ":OUTPUT ACCEPT [0:0]" >> \$IPTABLES_CONF_TMP
+echo ":INPUT DROP [0:0]" >> \$IPv4_TABLES_CONF_TMP
+echo ":FORWARD DROP [0:0]" >> \$IPv4_TABLES_CONF_TMP
+echo ":OUTPUT ACCEPT [0:0]" >> \$IPv4_TABLES_CONF_TMP
 
 #ループバック
-echo "-A OUTPUT -o lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -i lo -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -i lo -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 
 #ICMP ACCEPT
-echo "-A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-name t_icmp --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -p icmp -m icmp --icmp-type 8 -m hashlimit --hashlimit-name t_icmp --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 
 #ICMP さくらのシンプル監視のみ許可
-echo "-A INPUT -s ${MONITORING_SERVER_IPADDR} -p icmp -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s ${MONITORING_SERVER_IPADDR} -p tcp -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s ${MONITORING_SERVER_IPADDR} -p tcp -m tcp --dport 443 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s ${MONITORING_SERVER_IPADDR} -p icmp -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -s ${MONITORING_SERVER_IPADDR} -p tcp -m tcp --dport 80 -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -s ${MONITORING_SERVER_IPADDR} -p tcp -m tcp --dport 443 -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 
 #パケットチェック
-echo "-A INPUT -p 50 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p 51 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p 50 -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -p 51 -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 
 #マルチキャストDNS
-echo "-A INPUT -d 224.0.0.251/32 -p udp -m udp --dport 5353 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 224.0.0.251/32 -p udp -m udp --dport 5353 -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 
 #接続時のSSHポート及びサーバポートの設定
 #SSH
-echo "-A INPUT -p tcp -m state --syn --state NEW --dport ${SSH_EDIT_PORT} -m hashlimit --hashlimit-name t_sshd --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m state --syn --state NEW --dport ${SSH_EDIT_PORT} -m hashlimit --hashlimit-name t_sshd --hashlimit 1/m --hashlimit-burst ${HASH_LIMIT_PACKET} --hashlimit-mode srcip --hashlimit-htable-expire ${HASH_LIMIT_TIME} -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 #HTTP
-echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 #HTTPS
-echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-
-#メールサーバのポート設定
-#SMTP
-#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 25 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-#POP
-#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 110 -j ACCEPT" >> \$IPTABLES_CONF_TMP
-#IMAP
-#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 143 -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 
 #LOCAL IP Addr ACCEPT, プライベートネットワークを構築している場合のみ変更する
-echo "-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d ${LOCAL_IP_ADDR} -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -d ${LOCAL_IP_ADDR} -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 
 #接続済みのセッションを接続許可
-echo "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 
-#外部からのSNMP通信(UDP:161)をFWで破棄
-echo "-A INPUT -p udp -m udp --dport 161 -j DROP" >> \$IPTABLES_CONF_TMP
+#セキュアセットアップ・外部からのSNMP通信(UDP:161)をFWで破棄
+echo "-A INPUT -p udp -m udp --dport 161 -j DROP" >> \$IPv4_TABLES_CONF_TMP
 
-#セキュアセットアップ・ステルススキャンの破棄
-echo "-A INPUT -p tcp -m state --state NEW -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -j DROP" >> \$IPTABLES_CONF_TMP
+#セキュアセットアップ・データを持たないパケットの接続を破棄
+echo "-A INPUT -p tcp -m tcp --tcp-flags ALL NONE -j DROP" >> \$IPv4_TABLES_CONF_TMP
 
-#セキュアセットアップ・フラグメントパケットによる攻撃の破棄
-echo "-A INPUT -f -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,PSH,URG -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,PSH,ACK,URG -j DROP" >> \$IPTABLES_CONF_TMP
+#セキュアセットアップ・SYNflood攻撃と思われる接続を破棄
+echo "-A INPUT -p tcp -m tcp ! --syn -m state --state NEW -j DROP" >> \$IPv4_TABLES_CONF_TMP
 
-#TCP Null ポートスキャンの対策
-echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p tcp -m tcp --tcp-flags SYN,RST SYN,RST -j DROP" >> \$IPTABLES_CONF_TMP
+#セキュアセットアップ・ステルススキャン接続を破棄
+echo "-A INPUT -p tcp -m tcp --tcp-flags ALL ALL -j DROP" >> \$IPv4_TABLES_CONF_TMP
 
-#TCP Xmas ポートスキャンの対策
-echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN FIN,SYN -j DROP" >> \$IPTABLES_CONF_TMP
+#セキュアセットアップ・ブロードキャスト・パケットの破棄
+echo "-A INPUT -m pkttype --pkt-type broadcast -j DROP" >> \$IPv4_TABLES_CONF_TMP
 
-#TCP FINポートスキャンの対策
-echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,ACK FIN -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,ACK,URG -j DROP" >> \$IPTABLES_CONF_TMP
+#セキュアセットアップ・マルチキャスト・パケットの破棄
+echo "-A INPUT -m pkttype --pkt-type multicast -j DROP" >> \$IPv4_TABLES_CONF_TMP
 
-#ブロードキャスト・パケットの破棄
-echo "-A INPUT -m pkttype --pkt-type broadcast -j DROP" >> \$IPTABLES_CONF_TMP
-
-#マルチキャスト・パケットの破棄
-echo "-A INPUT -m pkttype --pkt-type multicast -j DROP" >> \$IPTABLES_CONF_TMP
-
-#無効ヘッダがあるTCPパケットを破棄
-echo "-A INPUT -m state --state INVALID -j DROP" >> \$IPTABLES_CONF_TMP
-
-#セキュアセットアップ・プライベートアドレスからの接続を破棄
-echo "-A INPUT -s 127.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 127.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 192.168.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 192.168.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 192.0.2.0/24 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 192.0.2.0/24 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 172.16.0.0/12 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 172.16.0.0/12 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 10.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 10.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 169.254.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 169.254.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 168.254.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 168.254.0.0/16 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 224.0.0.0/4 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 224.0.0.0/4 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 240.0.0.0/4 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 240.0.0.0/4 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 240.0.0.0/5 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 240.0.0.0/5 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -s 248.0.0.0/5 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 248.0.0.0/5 -j DROP" >> \$IPTABLES_CONF_TMP
+#セキュアセットアップ・無効ヘッダがあるTCPパケットを破棄
+echo "-A INPUT -m state --state INVALID -j DROP" >> \$IPv4_TABLES_CONF_TMP
 
 #セキュアセットアップ・ブロードキャストからの接続を破棄
-echo "-A INPUT -d 0.0.0.0/8 -j DROP" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -d 255.255.255.255/32 -j DROP" >> \$IPTABLES_CONF_TMP
-
-#Logging
-echo "-A INPUT -m limit --limit 5/m --limit-burst 7 -j LOG --log-prefix \" DEFAULT DROP \" " >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -j DROP" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -d 0.0.0.0/8 -j DROP" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -d 255.255.255.255/32 -j DROP" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -d 224.0.0.1 -j DROP" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -j DROP" >> \$IPv4_TABLES_CONF_TMP
 
 ##セキュアセットアップ・Ping及び113ポートからの接続を拒否
-echo "-A INPUT -p tcp -m tcp --dport 113 -j REJECT --reject-with tcp-reset" >> \$IPTABLES_CONF_TMP
-echo "-A INPUT -j REJECT --reject-with icmp-host-prohibited" >> \$IPTABLES_CONF_TMP
-echo "-A FORWARD -j REJECT --reject-with icmp-host-prohibited" >> \$IPTABLES_CONF_TMP
+echo "-A INPUT -p tcp -m tcp --dport 113 -j REJECT --reject-with tcp-reset" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -j REJECT --reject-with icmp-host-prohibited" >> \$IPv4_TABLES_CONF_TMP
+echo "-A FORWARD -j REJECT --reject-with icmp-host-prohibited" >> \$IPv4_TABLES_CONF_TMP
 
 #COMMIT End
-echo "COMMIT" >> \$IPTABLES_CONF_TMP
+echo "COMMIT" >> \$IPv4_TABLES_CONF_TMP
 
 #iptablesの保存
-cat \$IPTABLES_CONF_TMP > /etc/sysconfig/iptables
+cat \$IPv4_TABLES_CONF_TMP > /etc/sysconfig/iptables
 
 #iptablesの起動
 systemctl start iptables
 iptables -L
 EOF
-vi /home/${USER_NAME}/.iptables_setup
-sed -i "s/^-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT$/#\0/g" /etc/sysconfig/ip6tables
-vi /etc/sysconfig/ip6tables
+vi /home/${USER_NAME}/.ipv4tables_setup
+#
+# ip6tables
+cat <<EOF > /home/${USER_NAME}/.ipv6tables_setup
+#!/bin/bash
+
+#COMMIT File
+IPv6_TABLES_CONF_TMP=\`mktemp\`
+
+#iptablesの停止
+systemctl stop ip6tables
+
+#COMMIT Start
+echo "*filter" >> \$IPv6_TABLES_CONF_TMP
+#デフォルトルール
+
+echo ":INPUT DROP [0:0]" >> \$IPv6_TABLES_CONF_TMP
+echo ":FORWARD DROP [0:0]" >> \$IPv6_TABLES_CONF_TMP
+echo ":OUTPUT ACCEPT [0:0]" >> \$IPv6_TABLES_CONF_TMP
+
+#接続済みのセッションを接続許可
+echo "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT" >> \$IPv6_TABLES_CONF_TMP
+
+#ICMP ACCEPT
+echo "-A INPUT -p ipv6-icmp -j ACCEPT" >> \$IPv6_TABLES_CONF_TMP
+
+#ループバック
+echo "-A INPUT -i lo -j ACCEPT" >> \$IPv6_TABLES_CONF_TMP
+echo "-A INPUT -d fe80::/64 -p udp -m udp --dport 546 -m state --state NEW -j ACCEPT" >> \$IPv6_TABLES_CONF_TMP
+
+#パケットチェック
+echo "-A INPUT -p 50 -j ACCEPT" >> \$IPv6_TABLES_CONF_TMP
+echo "-A INPUT -p 51 -j ACCEPT" >> \$IPv6_TABLES_CONF_TMP
+
+#接続時のSSHポート及びサーバポートの設定
+#SSH
+#echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT" >> \$IPv6_TABLES_CONF_TMP
+#HTTP
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" >> \$IPv6_TABLES_CONF_TMP
+#HTTPS
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT" >> \$IPv6_TABLES_CONF_TMP
+
+#FTPからの接続は破棄
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 20 -j DROP" >> \$IPv6_TABLES_CONF_TMP
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 21 -j DROP" >> \$IPv6_TABLES_CONF_TMP
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 23 -j DROP" >> \$IPv6_TABLES_CONF_TMP
+
+#外部からのSNMP通信(UDP:161)をFWで破棄
+echo "-A INPUT -p udp -m udp --dport 161 -j DROP" >> \$IPv6_TABLES_CONF_TMP
+
+#セキュアセットアップ・データを持たないパケットの接続を破棄
+echo "-A INPUT -p tcp -m tcp --tcp-flags ALL NONE -j DROP" >> \$IPv6_TABLES_CONF_TMP
+
+#セキュアセットアップ・SYNflood攻撃と思われる接続を破棄
+echo "-A INPUT -p tcp -m tcp ! --syn -m state --state NEW -j DROP" >> \$IPv6_TABLES_CONF_TMP
+
+#セキュアセットアップ・ステルススキャン接続を破棄
+echo "-A INPUT -p tcp -m tcp --tcp-flags ALL ALL -j DROP" >> \$IPv6_TABLES_CONF_TMP
+
+#ブロードキャスト・パケットの破棄
+echo "-A INPUT -m pkttype --pkt-type broadcast -j DROP" >> \$IPv6_TABLES_CONF_TMP
+
+#マルチキャスト・パケットの破棄
+echo "-A INPUT -m pkttype --pkt-type multicast -j DROP" >> \$IPv6_TABLES_CONF_TMP
+
+#無効ヘッダがあるTCPパケットを破棄
+echo "-A INPUT -m state --state INVALID -j DROP" >> \$IPv6_TABLES_CONF_TMP
+
+#ALL
+echo "-A INPUT -j DROP" >> \$IPv6_TABLES_CONF_TMP
+
+##セキュアセットアップ・Ping及び113ポートからの接続を拒否
+echo "-A INPUT -p tcp -m tcp --dport 113 -j REJECT --reject-with tcp-reset" >> \$IPv6_TABLES_CONF_TMP
+echo "-A INPUT -j REJECT --reject-with icmp6-adm-prohibited" >> \$IPv6_TABLES_CONF_TMP
+echo "-A FORWARD -j REJECT --reject-with icmp6-adm-prohibited" >> \$IPv6_TABLES_CONF_TMP
+
+#COMMIT End
+echo "COMMIT" >> \$IPv6_TABLES_CONF_TMP
+
+#iptablesの保存
+cat \$IPv6_TABLES_CONF_TMP > /etc/sysconfig/ip6tables
+
+#iptablesの起動
+systemctl start ip6tables
+ip6tables -L
+EOF
+vi /home/${USER_NAME}/.ipv6tables_setup
+chmod 400 /home/${USER_NAME}/.ipv6tables_setup
+chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/.ipv6tables_setup
 #
 ############################################################################
 #### ユーザディレクトリにiptablesセットアップ・シェルスクリプトを保存。
@@ -252,25 +284,33 @@ echo -e "En: Is the destination is a global environment? [y/n]"
 read set_globaliptables_param
 if [ ${set_globaliptables_param} = "y" ] ; then
 	# グローバル環境では使わない。※ ローカル環境専用
-	sed -i "s|echo \"-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPTABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.iptables_setup
-	sed -i "s|echo \"-A INPUT -d ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPTABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.iptables_setup
+	sed -i "s|^echo \"-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPv4_TABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.ipv4tables_setup
+	sed -i "s|^echo \"-A INPUT -d ${LOCAL_IP_ADDR} -j ACCEPT\" >> \$IPv4_TABLES_CONF_TMP$|#\0|g" /home/${USER_NAME}/.ipv4tables_setup
 fi
 clear
 echo -e "Jp: さくらのシンプル監視のご利用について？ : 未使用 [ y ] / 利用 [ n ]"
 echo -e "En: About the use of Sakura of simple monitoring? : Unused [y] / use [n]"
 read set_sakura_simple_monitoring
 if [ ${set_sakura_simple_monitoring} = "y" ] ; then
-	sed -i "s|^echo \"-A INPUT -s ${MONITORING_SERVER_IPADDR} -p|#\0|g" /home/${USER_NAME}/.iptables_setup
+	sed -i "s|^echo \"-A INPUT -s ${MONITORING_SERVER_IPADDR} -p|#\0|g" /home/${USER_NAME}/.ipv4tables_setup
 else
-	sed -i "s|^echo \"-A INPUT -p icmp -m icmp --icmp-type 0|#\0|g" /home/${USER_NAME}/.iptables_setup
-	sed -i "s|^echo \"-A INPUT -p icmp -m icmp --icmp-type 8|#\0|g" /home/${USER_NAME}/.iptables_setup
+	sed -i "s|^echo \"-A INPUT -p icmp -m icmp --icmp-type 0|#\0|g" /home/${USER_NAME}/.ipv4tables_setup
+	sed -i "s|^echo \"-A INPUT -p icmp -m icmp --icmp-type 8|#\0|g" /home/${USER_NAME}/.ipv4tables_setup
 fi
-vi /home/${USER_NAME}/.iptables_setup
+vi /home/${USER_NAME}/.ipv4tables_setup
 ## ユーザディレクトリに保存したセットアップ・シェルスクリプトのアクセス権を変更。
-chmod 400 /home/${USER_NAME}/.iptables_setup
-sh /home/${USER_NAME}/.iptables_setup
-chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/.iptables_setup
+chmod 400 /home/${USER_NAME}/.ipv4tables_setup
+chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/.ipv4tables_setup
 chmod 701 /home/${USER_NAME}
+#
+systemctl enable ip6tables
+systemctl is-enabled ip6tables
+systemctl start ip6tables
+sh /home/${USER_NAME}/.ipv4tables_setup
+sh /home/${USER_NAME}/.ipv6tables_setup
+#
+vi /etc/sysconfig/iptables
+vi /etc/sysconfig/ip6tables
 fi
 #
 ############################################################################
@@ -280,42 +320,15 @@ ss -lt
 #
 ############################################################################
 ## SELINUXの変更。SakuraVPSでは既に disabled されているのでデフォルトで n を選択して下さい。
-echo -e "Jp: SELINUXの変更を開始します。[y] / 既に一回このシェルを通している場合は [n]"
-echo -e "En: It will initiate a change of SELINUX. [y] / Already one time when it is passed through the shell [n]"
+echo -e "Jp: SELINUXを無効化します。[y] / 既に一回このシェルを通している場合は [n]"
+echo -e "En: isable SELINUX. [y] / Already one time when it is passed through the shell [n]"
 read set_selinux_config
 if [ ${set_selinux_config} = "y" ] ; then
 getenforce
-echo -e "Jp: インストール先でSELINUXは有効化されてましたか？ [y/n] : さくらのVPSなら: 'n'"
-echo -e "En: Or SELINUX had been enabled on the installation? [y/n] : You can easily find Sakura VPS: 'n'"
-read set_selinuxenforcing
-if [ ${set_selinuxenforcing} = "y" ] ; then
-	setenforce 0
-	getenforce
-echo -e "Jp: SELINUXを完全に無効化しますか？ [y/n]"
-echo -e "En: Are you sure you want to completely disable the SELINUX? [y/n]"
-read set_selinuxdisabled
-if [ ${set_selinuxdisabled} = "y" ] ; then
-	sed -i 's|^SELINUX=enforcing$|SELINUX=disabled|g' /etc/selinux/config
-	vi /etc/selinux/config
-	vi /etc/sysconfig/selinux
-else
-	sed -i 's|^SELINUX=enforcing$|SELINUX=permissive|g' /etc/selinux/config
-	vi /etc/selinux/config
-	vi /etc/sysconfig/selinux
-	yum install selinux-policy-targeted selinux-policy-devel
-	# SSH Port
-	echo -e "Set SSH Port."
-	semanage port -l | grep ssh
-	semanage port -a -t ssh_port_t -p tcp ${SSH_EDIT_PORT}
-	semanage port -l | grep ssh
-	# HTTP Port
-	echo -e "Set HTTP Port."
-	semanage port -l | grep http
-	semanage port -a -t http_cache_port_t -p tcp ${REVERSE_PROXY_PORT}
-	semanage port -l | grep http
-fi
-#
-fi
+setenforce 0
+getenforce
+sed -i 's|^SELINUX=enforcing$|SELINUX=disabled|g' /etc/selinux/config
+vi /etc/selinux/config && vi /etc/sysconfig/selinux
 #
 fi
 ############################################################################
@@ -347,10 +360,7 @@ rpm -ivh ${RepoRemix86}
 ############################################################################
 #
 sed -i "11a\exclude=clam*" /etc/yum.repos.d/rpmforge.repo
-vi /etc/yum.repos.d/rpmforge.repo
-vi /etc/yum.repos.d/epel.repo
-vi /etc/yum.repos.d/elrepo.repo
-vi /etc/yum.repos.d/remi.repo
+vi /etc/yum.repos.d/rpmforge.repo && vi /etc/yum.repos.d/epel.repo && vi /etc/yum.repos.d/elrepo.repo && vi /etc/yum.repos.d/remi.repo
 #
 ## 各リリースのアップデート
 yum -y update rpmforge-release epel-release elrepo-release remi-release
@@ -371,11 +381,11 @@ echo "shadow*" >> /etc/.gitignore
 echo "gshadow*" >> /etc/.gitignore
 echo "passwd*" >> /etc/.gitignore
 echo "group*" >> /etc/.gitignore
-vi touch /etc/.gitignore
+vi /etc/.gitignore
 #
 yum -y groupinstall "Base" "Development tools" "Japanese Support"
 # CentOS7 httpd normal install.
-yum -y install pcre-devel zlib-devel openssl-devel libxslt-devel GeoIP-devel gd-devel perl-ExtUtils-Embed gperftools-devel httpd-devel httpd mod_geoip GeoIP
+yum -y install pcre-devel zlib-devel openssl-devel libxslt-devel GeoIP-devel gd-devel perl-ExtUtils-Embed gperftools-devel httpd-devel httpd mod_ssl mod_geoip GeoIP
 #
 ## yum-cron install
 yum -y install yum-cron
@@ -383,6 +393,7 @@ sudo sed -i "s|^apply_updates = no$|apply_updates = yes|g" /etc/yum/yum-cron.con
 vim /etc/yum/yum-cron.conf
 systemctl enable yum-cron
 systemctl start yum-cron
+systemctl is-enabled yum-cron
 ## yum clean all
 yum clean all
 # etckeeper init
@@ -405,14 +416,16 @@ yum -y install denyhosts
 #
 ############################################################################
 #
-echo -e "Sakura Simple Monitoring Setup?"
+echo -e "Sakura Simple Monitoring Setup? [ y/n ]"
 read set_sakurasms
 if [ ${set_sakurasms} = "y" ] ; then
+echo "${GLOBAL_IP_ADDR}" >> ${DENYHOSTS_ALLOWED_PATH}
 echo "${MONITORING_SERVER_IPADDR}" >> ${DENYHOSTS_ALLOWED_PATH}
 vim ${DENYHOSTS_ALLOWED_PATH}
 fi
 systemctl enable denyhosts
 systemctl start denyhosts
+systemctl is-enabled denyhosts
 #
 ############################################################################
 ############################################################################
@@ -642,7 +655,7 @@ done
 fi
 yum -y update clamav > /dev/null 2>&1
 freshclam > /dev/null
-clamscan --recursive --remove ${excludeopt} /home >> /home/${USER_NAME}/logs/clamscan/clamscan.log 2>&1
+clamscan -i -r --remove ${excludeopt} /home >> /home/${USER_NAME}/logs/clamscan/clamscan.log 2>&1
 cd /home/${USER_NAME}/logs/clamscan
 mv clamscan.log clamscan."\$(date +%Y%m%d-%I%M%S).txt"
 chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/logs/clamscan/*
@@ -659,6 +672,7 @@ fi
 ## ntp.conf Edit
 systemctl stop ntpd
 systemctl disable ntpd
+systemctl is-enabled ntpd
 #
 ## sysctl Edit IPv6の無効化及び、PostfixをIPv4のみ設定にする。
 #
@@ -678,13 +692,6 @@ sysctl -p
 sed -i 's|^inet_protocols = all$|inet_protocols = ipv4|' /etc/postfix/main.cf
 vi /etc/postfix/main.cf
 #
-fi
-## 再起動
-echo -e "Jp: 再起動しますか？ [y]"
-echo -e "En: Do you want to restart? [y]"
-read set_systemrestart
-if [ ${set_systemrestart} = "y" ] ; then
-reboot
 fi
 #
 ############################################################################

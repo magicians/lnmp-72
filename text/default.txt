@@ -18,17 +18,12 @@ SETUP_VPS_DNS_TER_IP=
 # -- Local Access IP. / Local Access Network Only. --
 LOCAL_IP_ADDR=192.168.1.0/24
 #
-# -- Global Access IP. or Static IP. --
+# -- Global / Local Access IP. or Static IP. --
+#GLOBAL_IP_ADDR=192.168.1.
 GLOBAL_IP_ADDR=
 #
 # -- Server Static IP. --
 SERVER_STATIC_IP_ADDR=
-#
-# -- SSH Access Network Hosts. / Local Access Network Only. --
-LOCAL_IP_HOSTS=192.168.1.
-#
-# -- Global IP. / Provider Host. --
-GLOBAL_ACCESS_HOSTS=
 #
 # -- Sakura Simple Monitoring
 MONITORING_SERVER_IPADDR=61.211.224.144/28

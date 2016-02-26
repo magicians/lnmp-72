@@ -51,6 +51,9 @@ cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/02-proxy.conf
     proxy_ignore_headers  X-Accel-Redirect X-Accel-Expires Cache-Control Expires Set-Cookie;
     proxy_cache_path      ${NGINX_PROXY_CACHE_PATH} levels=1:2 keys_zone=cache_${CONFIG_HOST_DOMAIN}:4m max_size=50m inactive=120m;
     proxy_temp_path       ${NGINX_PROXY_CACHE_TEMP};
+    proxy_buffering       on;
+    proxy_buffer_size     ${NGINX_PROXY_BUFFER_SIZE};
+    proxy_buffers         ${NGINX_LARGE_CLIENT_NUM} ${NGINX_PROXY_BUFFER_SIZE};
     proxy_cache_valid     200 10m;
     proxy_cache_valid     404 5m;
     proxy_set_header      Host               \$host;
@@ -187,46 +190,46 @@ fi
 ## Referer Spam
 echo -e "Referer Spam Deny"
 cat <<EOF > /etc/nginx/referrer_deny
-set $referrerspam 0;
+set \$referrerspam 0;
 
-if ( $http_referer ~* '${RefererSpam00}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam00}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam01}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam01}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam02}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam02}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam03}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam03}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam04}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam04}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam05}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam05}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam06}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam06}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam07}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam07}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam08}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam08}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam09}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam09}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam10}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam10}' ){
+  set \$referrerspam 1;
 }
-if ( $http_referer ~* '${RefererSpam11}' ){
-  set $referrerspam 1;
+if ( \$http_referer ~* '${RefererSpam11}' ){
+  set \$referrerspam 1;
 }
 # Deny of ReferrerSpam
-if ( $referrerspam = 1) {
+if ( \$referrerspam = 1) {
   return 444;
 }
 EOF

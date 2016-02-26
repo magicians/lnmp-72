@@ -47,8 +47,8 @@ sed -i 's|^;listen.mode|listen.mode|g' /etc/php-fpm.d/www.conf
 sed -i 's|^pm = dynamic|pm = static|g' /etc/php-fpm.d/www.conf
 sed -i "s|^pm.max_children = 50|pm.max_children = ${PHP_FPM_MAX_CHILDREN}|g" /etc/php-fpm.d/www.conf
 sed -i "s|^;pm.max_requests = 500|pm.max_requests = ${PHP_FPM_MAX_REQUEST}|g" /etc/php-fpm.d/www.conf
-sed -i "s|^php_admin_value\[error_log\]|;\0|g" /etc/php-fpm.d/www.conf
-sed -i "413a\php_admin_value[error_log] = /var/www/logs/phpfpm_error.log" /etc/php-fpm.d/www.conf
+#sed -i "s|^php_admin_value\[error_log\]|;\0|g" /etc/php-fpm.d/www.conf
+#sed -i "413a\php_admin_value[error_log] = /var/www/logs/phpfpm_error.log" /etc/php-fpm.d/www.conf
 vim /etc/php-fpm.d/www.conf
 # PHP.ini Edit
 #
@@ -121,6 +121,7 @@ sed -i 's|^LoadModule lbmethod_bybusyness_module|#\0|' ${APACHE_MOD_CONFIG_DIREC
 sed -i 's|^LoadModule lbmethod_byrequests_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
 sed -i 's|^LoadModule lbmethod_bytraffic_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
 sed -i 's|^LoadModule lbmethod_heartbeat_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
+sed -i 's|^LoadModule proxy_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
 sed -i 's|^LoadModule proxy_express_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
 sed -i 's|^LoadModule proxy_fcgi_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
 sed -i 's|^LoadModule proxy_fdpass_module|#\0|' ${APACHE_MOD_CONFIG_DIRECTORY}/00-proxy.conf
@@ -146,12 +147,12 @@ rm -rf extract_forwarded
 echo -e "99-nginx.conf Create."
 cat <<EOF > ${APACHE_MOD_CONFIG_DIRECTORY}/99-nginx.conf
 # Proxy Mod Conflict
-LoadModule extract_forwarded_module modules/mod_extract_forwarded.so
+#LoadModule extract_forwarded_module modules/mod_extract_forwarded.so
 # Nginx IP Address
-MEForder refuse,accept
-MEFrefuse all
+#MEForder refuse,accept
+#MEFrefuse all
 # Nginx Local IP
-MEFaccept 127.0.0.1
+#MEFaccept 127.0.0.1
 EOF
 vim ${APACHE_MOD_CONFIG_DIRECTORY}/99-nginx.conf
 #
@@ -258,7 +259,7 @@ if [ ${set_nginx_setup} = "y" ] ; then
 ######################################################################
 echo -e "Nginx Default Setting."
 sed -i "s|^user nginx|user ${WEB_SERVER_SYSTEM_USER_GROUP}|g" /etc/nginx/nginx.conf
-sed -i "s|^worker_processes  1|worker_processes  ${NGINX_WORKER_PROCESSES}|g" /etc/nginx/nginx.conf
+sed -i "s|^worker_processes  1|worker_processes  auto|g" /etc/nginx/nginx.conf
 sed -i "3a\#worker_cpu_affinity ${NGINX_WORKER_CPU_AFFINITY};" /etc/nginx/nginx.conf
 sed -i "4a\#worker_priority ${NGINX_WORKER_PRIORITY};" /etc/nginx/nginx.conf
 sed -i "s|^error_log  /var/log/nginx/error.log|error_log  ${APACHE_LOG_DIRECTORY}/nginx_error.log|g" /etc/nginx/nginx.conf
