@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-72 v1.0.5
+#### lnmp-72 v1.0.6
 ############################################################################
 source ./initfile
 source ./default.txt
@@ -555,15 +555,25 @@ cat <<EOF > /etc/nginx/php_fpmd
 # PHP-FPM SSL Setting.
 #
     location ~ \.php(\$|/) {
-        try_files               \$uri @pretty_url;
-        include                 /etc/nginx/fastcgi_params;
-        fastcgi_pass            unix:${BACKEND_LISTEN_SOCK};
-        fastcgi_index           index.php;
-        fastcgi_split_path_info ^(.+\.php)(.*)$;
-        fastcgi_param           SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-        fastcgi_param           HTTPS on;
-        #fastcgi_pass_header     "X-Accel-Redirect";
-        #fastcgi_pass_header     "X-Accel-Expires";
+        include                         /etc/nginx/fastcgi_params;
+        fastcgi_pass                    unix:/var/run/php-fpm/www.sock;
+        fastcgi_index                   index.php;
+        fastcgi_split_path_info         ^(.+\.php)(.*)$;
+        fastcgi_param                   SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_intercept_errors        on;
+        fastcgi_ignore_client_abort     off;
+        fastcgi_connect_timeout         60;
+        fastcgi_send_timeout            180;
+        fastcgi_read_timeout            180;
+        fastcgi_buffer_size             ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_buffers                 ${NGINX_LARGE_CLIENT_NUM} ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_busy_buffers_size       ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_temp_file_write_size    ${NGINX_PROXY_BUFFER_SIZE};
+        # Community
+        fastcgi_param PHP_VALUE         "allow_url_fopen=On";
+        fastcgi_param                   HTTPS on;
+        #fastcgi_pass_header            "X-Accel-Redirect";
+        #fastcgi_pass_header            "X-Accel-Expires";
     }
 EOF
 #
@@ -572,15 +582,10 @@ vim /etc/nginx/php_fpmd
 cat <<EOF > /etc/nginx/pretty_url
 # PRETTY-URL SSL Setting.
 #
-    location @pretty_url {
-        include                 /etc/nginx/fastcgi_params;
-        fastcgi_pass            unix:${BACKEND_LISTEN_SOCK};
-        fastcgi_index           index.php;
-        fastcgi_split_path_info ^(.+\.php)(.*)$;
-        fastcgi_param           SCRIPT_FILENAME ${APACHE_FILE_DIRECTORY}/index.php;
-        fastcgi_param           HTTPS on;
-        #fastcgi_pass_header     "X-Accel-Redirect";
-        #fastcgi_pass_header     "X-Accel-Expires";
+    location ~ / {
+        if (!-e $request_filename) {
+            rewrite ^ /index.php last;
+        }
     }
 EOF
 #
@@ -694,7 +699,7 @@ server {
     }
 
     location / {
-        try_files \$uri \$uri/ @pretty_url;
+        try_files \$uri \$uri/ /index.php?\$args;
     }
 
     # PHP-FPM
@@ -705,7 +710,7 @@ server {
 
     # SSL Admin Area Setup
     # WordPress Admin Directory
-    location ~ /(${NGINX_BACKEND_DIRECTORY}) {
+    location ~ /index.php/(${NGINX_BACKEND_DIRECTORY}) {
         # API
         valid_referers    ${CONFIG_HOST_DOMAIN} *.concrete5.org *.concrete5-japan.org *.google.com;
         if (\$invalid_referer) {
@@ -740,7 +745,7 @@ server {
     #}
 
     # concrete5 Config Files Access Setup
-    location ~ /(config|database.php) {
+    location ~ /(config/|database.php) {
         allow   127.0.0.1;
         allow   ${SERVER_STATIC_IP_ADDR};
         deny    all;
