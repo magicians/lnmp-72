@@ -250,8 +250,8 @@ cat <<EOF > /etc/nginx/php_fpmd
         fastcgi_split_path_info ^(.+\.php)(.*)$;
         fastcgi_param           SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         fastcgi_param           HTTPS on;
-        fastcgi_pass_header     "X-Accel-Redirect";
-        fastcgi_pass_header     "X-Accel-Expires";
+        #fastcgi_pass_header     "X-Accel-Redirect";
+        #fastcgi_pass_header     "X-Accel-Expires";
     }
 EOF
 #
@@ -267,8 +267,8 @@ cat <<EOF > /etc/nginx/wp_permalink
         fastcgi_split_path_info ^(.+\.php)(.*)$;
         fastcgi_param           SCRIPT_FILENAME ${APACHE_FILE_DIRECTORY}/index.php;
         fastcgi_param           HTTPS on;
-        fastcgi_pass_header     "X-Accel-Redirect";
-        fastcgi_pass_header     "X-Accel-Expires";
+        #fastcgi_pass_header     "X-Accel-Redirect";
+        #fastcgi_pass_header     "X-Accel-Expires";
     }
 EOF
 #

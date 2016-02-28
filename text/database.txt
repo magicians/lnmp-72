@@ -36,7 +36,7 @@ NGINX_PROXY_BUFFER_SIZE=16k
 NGINX_BACKEND_CACHE_RELOAD=86400
 #
 # -- Nginx Backend URI / WordPress
-NGINX_BACKEND_DIRECTORY=wp-admin/\\.*\|wp-\.\*\.php\|/wp-login\.php\|xmlrpc\.php
+NGINX_BACKEND_DIRECTORY=wp-admin/\\\.*\|wp-\.\*\.php\|wp-login\.php\|xmlrpc\.php
 NGINX_BACKEND_COOKIE=comment_author\|wordpress_\[a-f0-9\]\+\|wp-postpass\|wordpress_no_cache\|wordpress_logged_in
 #
 # -- Nginx Backend URI / concrete5
