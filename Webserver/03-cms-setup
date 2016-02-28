@@ -135,7 +135,9 @@ cat <<EOF > /etc/nginx/https_param
     ssl_certificate_key          ${FRONT_SSL_KEY};
     ssl_dhparam                  ${FRONT_SSL_DH};
 
+    # HSTS
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+
     ssl_prefer_server_ciphers    on;
 
     ssl_session_cache shared:SSL:${FRONT_SSL_SESSION};
@@ -156,19 +158,15 @@ EOF
 vim /etc/nginx/https_param
 ############################################################################
 ############################################################################
-echo "Nginx Setup http/v2[y] / spdy[n]"
-read nginxhttp2
-####
-if [ ${nginxhttp2} = "y" ] ; then
-# http2 Backend Setting.
-echo -e "HTTP/2.0 PARAM SETUP."
-cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/06-httpv2.conf
+echo "Nginx Setup HTTP/2.0"
+#
+cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/06-h2.conf
     #Sets the size of the per worker input buffer.
     http2_recv_buffer_size 256k;
 EOF
-vim ${NGINX_CONFIG_DIRECTORY}/06-httpv2.conf
-# HTTP/2.0
-cat <<EOF> /etc/nginx/httpv2_param
+vim ${NGINX_CONFIG_DIRECTORY}/06-h2.conf
+#
+cat <<EOF> /etc/nginx/h2_param
     http2_max_concurrent_streams 128;
     http2_max_field_size 4k;
     http2_max_header_size 16k;
@@ -176,16 +174,8 @@ cat <<EOF> /etc/nginx/httpv2_param
     http2_idle_timeout 3m;
     http2_chunk_size 8k;
 EOF
-vim /etc/nginx/httpv2_param
-else
-# SPDY/3.1
-echo -e "SPDY PARAM SETUP."
-cat <<EOF> /etc/nginx/spdy_param
-    spdy_chunk_size             8k;
-    spdy_headers_comp           9;
-EOF
-vim /etc/nginx/spdy_param
-fi
+vim /etc/nginx/h2_param
+#
 ## Referer Spam
 echo -e "Referer Spam Deny"
 cat <<EOF > /etc/nginx/referrer_deny
@@ -234,40 +224,32 @@ if ( \$referrerspam = 1) {
 EOF
 vim /etc/nginx/referrer_deny
 #
-echo -e "Mobile UA Setup"
-cat <<EOF > /etc/nginx/mobile_ua
-    # Mobile UA Setup
-    #
-    set \$mobile "";
-    if (\$http_user_agent ~* "DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter") {
-        set \$mobile ".kt";
-    }
-    if (\$http_user_agent ~* "iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone") {
-        set \$mobile ".sp";
-    }
-EOF
-vim /etc/nginx/mobile_ua
-#
-echo -e "Cache Setup"
-cat <<EOF > /etc/nginx/not_cache
+echo -e "HTTP Method Deny / Cache Control Setup"
+cat <<EOF > /etc/nginx/set_header_control
         # Cache Setup
         #
         set \$do_not_cache       0;
         if (\$request_method != "GET") {
             set \$do_not_cache    1;
         }
-        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}|${NGINX_BACKEND_LOGIN})') {
+        if (\$request_uri ~* "${NGINX_BACKEND_DIRECTORY}") {
             set \$do_not_cache   1;
         }
         # WordPress
-        if (\$http_cookie ~* '(comment_author_|wordpress_(?!test_cookie)|wp-postpass_)' ) {
+        if (\$http_cookie ~* "${NGINX_BACKEND_COOKIE}") {
             set \$do_not_cache   1;
         }
-EOF
-vim /etc/nginx/not_cache
-#
-echo -e "HTTP Method Deny / Cache Control Setup"
-cat <<EOF > /etc/nginx/set_header_control
+
+        # Mobile UA Setup
+        #
+        set \$mobile "";
+        if (\$http_user_agent ~* "DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter") {
+            set \$mobile ".kt";
+        }
+        if (\$http_user_agent ~* "iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone") {
+            set \$mobile ".sp";
+        }
+
         # HTTP Method Deny
         #
         if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
@@ -282,9 +264,6 @@ cat <<EOF > /etc/nginx/set_header_control
         #
         add_header Cache-Control "public, max-age=${NGINX_BACKEND_CACHE_RELOAD}";
 
-        # HSTS
-        #
-        add_header Strict-Transport-Security "max-age=31536000";
 EOF
 vim /etc/nginx/set_header_control
 #
@@ -301,36 +280,19 @@ cat <<EOF > /etc/nginx/php_fpmd
 # PHP-FPM SSL Setting.
 #
     location ~ \.php$ {
-        try_files           \$uri =404;
-        include             /etc/nginx/fastcgi_params;
-        fastcgi_pass        unix:${BACKEND_LISTEN_SOCK};
-        fastcgi_index       index.php;
-        fastcgi_param       SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-        fastcgi_param       HTTPS on;
-        fastcgi_pass_header "X-Accel-Redirect";
-        fastcgi_pass_header "X-Accel-Expires";
+        try_files               \$uri =404;
+        include                 /etc/nginx/fastcgi_params;
+        fastcgi_pass            unix:${BACKEND_LISTEN_SOCK};
+        fastcgi_index           index.php;
+        fastcgi_split_path_info ^(.+\.php)(.*)$;
+        fastcgi_param           SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param           HTTPS on;
+        fastcgi_pass_header     "X-Accel-Redirect";
+        fastcgi_pass_header     "X-Accel-Expires";
     }
 EOF
 #
 vim /etc/nginx/php_fpmd
-# WordPress
-############################################################################
-# WordPress
-echo -e "WordPress PARAM SETUP."
-cat <<EOF> /etc/nginx/wp_permalink
-    location ~ / {
-        # static files
-        if (-f \$request_filename) {
-            access_log  off;
-            break;
-        }
-        # request to index.php
-        if (!-e \$request_filename) {
-            rewrite ^(.+)\$ /index.php?q=\$1 last;
-        }
-    }
-EOF
-vim /etc/nginx/wp_permalink
 # WordPress
 ############################################################################
 echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP."
@@ -347,7 +309,7 @@ server {
     root   ${APACHE_FILE_DIRECTORY};
     charset ${NGINX_DEFAULT_CHARSET};
 
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_HTTP.log;
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}.log;
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
 
@@ -384,9 +346,9 @@ server {
 #### Backend Config.
 ##
 server {
-    lisetn      ${REVERSE_PROXY_PORT} ssl;
-    lisetn      [::]:${REVERSE_PROXY_PORT} ssl;
-    server_name _;
+    listen      ${REVERSE_PROXY_PORT} ssl;
+    listen      [::]:${REVERSE_PROXY_PORT} ssl;
+    server_name ${CONFIG_HOST_DOMAIN};
 
     # SSL PARAM
     include https_param;
@@ -395,17 +357,12 @@ server {
     index ${NGINX_INDEX_FILE_LIST};
     charset ${NGINX_DEFAULT_CHARSET};
 
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_BK.log;
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_back.log;
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
 
     gzip         off;
     gzip_vary    off;
-
-    # Permalink Setup
-    # WordPress
-    #
-    include wp_permalink;
 
     # php-fpm Setup
     #
@@ -416,40 +373,26 @@ server {
 #### SSL Config.
 ##
 server {
-	lisetn      443 ssl;
-    lisetn      [::]:443 ssl;
+	listen      443 ssl;
+    listen      [::]:443 ssl;
     # HTTP/2.0
-    # listen      443 ssl ${NGINX_V2_MOD};
-    # listen      [::]:443 ssl ${NGINX_V2_MOD};
-    # SPDY/3.1
-    # listen      443 ssl ${NGINX_SPDY_MOD};
-    # listen      [::]:443 ssl ${NGINX_SPDY_MOD};
+    # listen      443 ssl http2;
+    # listen      [::]:443 ssl http2;
     server_name ${CONFIG_HOST_DOMAIN};
 
     # SSL PARAM
     include https_param;
 
     # HTTP/2.0
-    # include httpv2_param;
-
-    # SPDY
-    # include spdy_param;
+    # include h2_param;
 
     root   ${APACHE_FILE_DIRECTORY};
     index ${NGINX_INDEX_FILE_LIST};
     charset ${NGINX_DEFAULT_CHARSET};
 
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_SSL.log;
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_ssl.log;
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
-
-    # Cache Setup
-    #
-    include not_cache;
-
-    # Mobile UA Setup
-    #
-    include mobile_ua;
 
     # Header Control
     #
@@ -469,39 +412,50 @@ server {
         break;
     }
 
+    location = /google([a-f0-9]\.html) {
+        valid_referers    *.google.com;
+        if (\$invalid_referer) {
+            return 403;
+        }
+        access_log      ${NGINX_LOCATION_LOG};
+        log_not_found   ${NGINX_LOG_NOT_FOUND};
+    }
+
+    location = /robots.txt {
+        access_log      ${NGINX_LOCATION_LOG};
+        log_not_found   ${NGINX_LOG_NOT_FOUND};
+    }
+
+    location / {
+        try_files \$uri \$uri/ @wordpress;      
+    }
+
+    location @wordpress {
+        proxy_no_cache           \$do_not_cache;
+        proxy_cache_bypass       \$do_not_cache;
+        proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
+        proxy_cache              cache_${CONFIG_HOST_DOMAIN};
+        proxy_pass               ${NGINX_SCHEMA}\$host.backend;
+    }
+
     # SSL Admin Area Setup
     # WordPress Admin Directory
     location /${NGINX_BACKEND_DIRECTORY} {
-        access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
-        # GeoIP
-        if (\$allowed_country != yes) {
-            return 444;
-        }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
-    }
-
-    location = /${NGINX_BACKEND_LOGIN} {
-        access_log      off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
-        # GeoIP
-        if (\$allowed_country != yes) {
-            return 444;
-        }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
-    }
-
-    location ~ /xmlrpc.php {
-        valid_referers    *.wordpress.com;
+        # JetPack
+        valid_referers    wordpress.com;
         if (\$invalid_referer) {
+            return 403;
+        }
+        # GeoIP
+        if (\$allowed_country != yes) {
             return 444;
         }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+        access_log      off;
+        log_not_found   off;
         proxy_pass      ${NGINX_SCHEMA}\$host.backend;
     }
 
@@ -518,19 +472,11 @@ server {
         break;
     }
 
-    # Proxy Setup
-    location / {
-        # WordPress Default Setup
-        #
-        try_files \$uri \$uri/ /index.php?\$args;
-
-        # REVERSE PROXY SETUP
-        #
-        proxy_no_cache           \$do_not_cache;
-        proxy_cache_bypass       \$do_not_cache;
-        proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
-        proxy_cache              cache_${CONFIG_HOST_DOMAIN};
-        proxy_pass               ${NGINX_SCHEMA}\$host.backend;
+    # WordPress Config Files Access Setup
+    location ~ /(wp-config\.php|wp-mail\.php|wp-cron\.php|install\.php) {
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        deny    all;
     }
 
     # redirect server error pages to the static page /403.html
@@ -552,14 +498,6 @@ server {
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
         root   ${APACHE_ERROR_DIRECTORY};
-    }
-
-    # WordPress Config Files Access Setup
-    #
-    location ~ /(wp-config\.php|wp-mail\.php|wp-cron\.php|install\.php) {
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        deny    all;
     }
 }
 EOF
@@ -668,6 +606,7 @@ cat <<EOF > /etc/nginx/php_fpmd
         include             /etc/nginx/fastcgi_params;
         fastcgi_pass        unix:${BACKEND_LISTEN_SOCK};
         fastcgi_index       index.php;
+        fastcgi_split_path_info ^(.+\.php)(.*)$;
         fastcgi_param       SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         fastcgi_param       HTTPS on;
         fastcgi_pass_header "X-Accel-Redirect";
@@ -676,18 +615,6 @@ cat <<EOF > /etc/nginx/php_fpmd
 EOF
 #
 vim /etc/nginx/php_fpmd
-# concrete5
-############################################################################
-# concrete5
-echo -e "concrete5 PARAM SETUP."
-cat <<EOF> /etc/nginx/c5_permalink
-    location ~ / {
-        if (!-e \$request_filename) {
-            rewrite ^ /index.php last;
-        }
-    }
-EOF
-vim /etc/nginx/c5_permalink
 # concrete5
 ############################################################################
 echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP."
@@ -704,7 +631,7 @@ server {
     root   ${APACHE_FILE_DIRECTORY};
     charset ${NGINX_DEFAULT_CHARSET};
 
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_HTTP.log;
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}.log;
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
 
@@ -738,33 +665,60 @@ server {
 
 }
 
-#### SSL Config.
+#### Backend Config.
 ##
 server {
-    lisetn      443 ssl;
-    lisetn      [::]:443 ssl;
-    # HTTP/2.0
-    # listen      443 ssl ${NGINX_V2_MOD};
-    # listen      [::]:443 ssl ${NGINX_V2_MOD};
-    # SPDY/3.1
-    # listen      443 ssl ${NGINX_SPDY_MOD};
-    # listen      [::]:443 ssl ${NGINX_SPDY_MOD};
+    listen      ${REVERSE_PROXY_PORT} ssl;
+    listen      [::]:${REVERSE_PROXY_PORT} ssl;
     server_name ${CONFIG_HOST_DOMAIN};
 
     # SSL PARAM
     include https_param;
-    # HTTP/2.0
-    # include httpv2_param;
-    # SPDY
-    # include spdy_param;
 
     root   ${APACHE_FILE_DIRECTORY};
     index ${NGINX_INDEX_FILE_LIST};
     charset ${NGINX_DEFAULT_CHARSET};
 
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_SSL.log;
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_back.log;
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    gzip         off;
+    gzip_vary    off;
+
+    # php-fpm Setup
+    #
+    include php_fpmd;
+
+}
+
+#### SSL Config.
+##
+server {
+    listen      443 ssl;
+    listen      [::]:443 ssl;
+    # HTTP/2.0
+    # listen      443 ssl http2;
+    # listen      [::]:443 ssl http2;
+    server_name ${CONFIG_HOST_DOMAIN};
+
+    # SSL PARAM
+    include https_param;
+
+    # HTTP/2.0
+    # include h2_param;
+
+    root   ${APACHE_FILE_DIRECTORY};
+    index ${NGINX_INDEX_FILE_LIST};
+    charset ${NGINX_DEFAULT_CHARSET};
+
+    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_ssl.log;
+
+    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    # Header Control
+    #
+    include set_header_control;
 
     location = /*\.(${NGINX_LOCATION_ASCII_FILE}) {
         access_log      ${NGINX_LOCATION_LOG};
@@ -780,93 +734,61 @@ server {
         break;
     }
 
-    # php-fpm Setup
-    #
-    #include php_fpmd;
+    location = /google([a-f0-9]\.html) {
+        valid_referers    *.google.com;
+        if (\$invalid_referer) {
+            return 403;
+        }
+        access_log      ${NGINX_LOCATION_LOG};
+        log_not_found   ${NGINX_LOG_NOT_FOUND};
+    }
 
-    # Permalink Setup
-    # concrete5
-    #
-    #include c5_permalink;
+    location = /robots.txt {
+        access_log      ${NGINX_LOCATION_LOG};
+        log_not_found   ${NGINX_LOG_NOT_FOUND};
+    }
 
-    # Proxy Setup
     location / {
-        # WordPress Default Setup
-        #
-        try_files \$uri \$uri/ /index.php?\$args;
+        try_files \$uri \$uri/ @concrete5;
+    }
 
-        # HTTP Method Deny
-        #
-        if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
-            return 444;
-        }
-        # Cache Control
-        #
-        add_header Cache-Control "public, max-age=${NGINX_BACKEND_CACHE_RELOAD}";
-
-        # Cache Setup
-        #
-        set \$do_not_cache       0;
-        if (\$request_method != "GET") {
-            set \$do_not_cache    1;
-        }
-        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}|${NGINX_BACKEND_LOGIN})') {
-            set \$do_not_cache   1;
-        }
-        # concrete5
-        if (\$http_cookie ~* '(CONCRETE5|CONCRETE5_INSTALL_TEST|dashboardPanelStatus)' ) {
-            set \$do_not_cache   1;
-        }
-        # Mobile UA Setup
-        #
-        set \$mobile "";
-        if (\$http_user_agent ~* '(DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter)') {
-            set \$mobile ".kt";
-        }
-        if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
-            set \$mobile ".sp";
-        }
-
-        # Referrer Spam Deny
-        #
-        include referrer_deny;
-
-        # REVERSE PROXY SETUP
-        #
+    location @concrete5 {
         proxy_no_cache           \$do_not_cache;
         proxy_cache_bypass       \$do_not_cache;
         proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
         proxy_cache              cache_${CONFIG_HOST_DOMAIN};
         proxy_pass               ${NGINX_SCHEMA}\$host.backend;
+    }
 
-        # SSL Admin Area Setup
-        # WordPress Admin Directory
-        location /(${NGINX_BACKEND_DIRECTORY}) {
-            access_log      off;
-            proxy_pass      ${NGINX_SCHEMA}\$host.backend;
-            # GeoIP
-            if (\$allowed_country != yes) {
-                return 444;
-            }
-            allow   127.0.0.1;
-            allow   ${SERVER_STATIC_IP_ADDR};
-            allow   ${GLOBAL_IP_ADDR};
-            deny    all;
+    # SSL Admin Area Setup
+    # WordPress Admin Directory
+    location /${NGINX_BACKEND_DIRECTORY} {
+        # GeoIP
+        if (\$allowed_country != yes) {
+            return 444;
         }
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        allow   ${GLOBAL_IP_ADDR};
+        deny    all;
+        access_log      off;
+        log_not_found   off;
+        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
+    }
 
-        location = /${NGINX_BACKEND_LOGIN} {
-            access_log      off;
-            proxy_pass      ${NGINX_SCHEMA}\$host.backend;
-            # GeoIP
-            if (\$allowed_country != yes) {
-                return 444;
-            }
-            allow   127.0.0.1;
-            allow   ${SERVER_STATIC_IP_ADDR};
-            allow   ${GLOBAL_IP_ADDR};
-            deny    all;
+    # concrete5
+    location ~ /files/ {
+        valid_referers    ${NGINX_REFERERS_URI};
+        if (\$invalid_referer) {
+            return 403;
         }
+    }
 
+    # concrete5 Config Files Access Setup
+    location ~ /(config|database.php) {
+        allow   127.0.0.1;
+        allow   ${SERVER_STATIC_IP_ADDR};
+        deny    all;
     }
 
     # redirect server error pages to the static page /403.html
@@ -889,23 +811,6 @@ server {
     location = /50x.html {
         root   ${APACHE_ERROR_DIRECTORY};
     }
-
-    # concrete5
-    location ~ /files/ {
-        valid_referers    ${NGINX_REFERERS_URI};
-        if (\$invalid_referer) {
-            return 403;
-        }
-    }
-
-    # concrete5 Config Files Access Setup
-    #
-    location ~ /(config|database.php) {
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        deny    all;
-    }
-
 }
 EOF
 vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf

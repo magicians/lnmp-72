@@ -24,12 +24,9 @@ sed -i "105a\export LANG='ja_JP.UTF-8'" ~/rpm/SPECS/nginx.spec
 sed -i "121a\        --with-http_geoip_module \\\\" ~/rpm/SPECS/nginx.spec
 sed -i "161a\        --with-http_geoip_module \\\\" ~/rpm/SPECS/nginx.spec
 ##
-echo "SSL / http2 Setup? [y]"
-read ngxhttpv2mod
-if [ ${ngxhttpv2mod} = "y" ] ; then
+echo "HTTP/2.0 Setup"
 sed -i "s|with_spdy|with_v2|g" ~/rpm/SPECS/nginx.spec
 sed -i "s|--with-http_spdy_module|--with-http_v2_module|g" ~/rpm/SPECS/nginx.spec
-fi
 #
 ## nginx.spec Edit View.
 vim ~/rpm/SPECS/nginx.spec
@@ -46,6 +43,7 @@ sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default_conf
 sudo mv /etc/nginx/conf.d/example_ssl.conf /etc/nginx/conf.d/example_ssl_conf
 # SNI Check
 sudo nginx -V 2>&1 | grep SNI
+#sudo nginx -V 2>&1 | grep v2
 # TLS SNI support enabled
 # http2 / v2_module
 # http://nginx.org/en/docs/http/ngx_http_v2_module.html

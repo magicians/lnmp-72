@@ -300,7 +300,9 @@ EOF
 vim /etc/logrotate.d/webserver
 #### DB
 echo -e "MariaDB conf Edit."
-echo "default-storage-engine=${DB_STORAGE_ENGINE}" >> /etc/my.cnf
+sed -i "10a\innodb_buffer_pool_size = ${DB_BUFFER_POOL_SIZE}" /etc/my.cnf
+sed -i "11a\innodb_log_file_size = ${DB_LOG_FILE_SIZE}" /etc/my.cnf
+sed -i "12a\default-storage-engine=${DB_STORAGE_ENGINE}" /etc/my.cnf
 vim /etc/my.cnf
 ####
 systemctl enable php-fpm

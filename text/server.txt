@@ -136,10 +136,6 @@ NGINX_KEEPALIVE_UPSTREAM=10
 # -- SSL or Normal
 NGINX_SCHEMA=https://
 #
-# -- SSL MOD SETUP
-NGINX_V2_MOD=http2
-NGINX_SPDY_MOD=spdy
-#
 # -- Nginx Config Directory.
 NGINX_BASE_DIRECTORY=/etc/nginx
 NGINX_CONFIG_DIRECTORY=/etc/nginx/conf.d
@@ -169,17 +165,13 @@ NGINX_PROXY_BUFFER_SIZE=16k
 ## -- Nginx Cache Reload Time
 NGINX_BACKEND_CACHE_RELOAD=86400
 #
-# -- Nginx Backend URI / baserCMS
-#NGINX_BACKEND_DIRECTORY=admin
-#NGINX_BACKEND_LOGIN=installations
-#
 # -- Nginx Backend URI / WordPress
-NGINX_BACKEND_DIRECTORY=wp-admin
-NGINX_BACKEND_LOGIN=wp-login.php
+NGINX_BACKEND_DIRECTORY=/wp-admin/|/xmlrpc.php|wp-.*.php|/wp-login.php
+NGINX_BACKEND_COOKIE=comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_no_cache|wordpress_logged_in
 #
 # -- Nginx Backend URI / concrete5
-#NGINX_BACKEND_DIRECTORY=dashboard\|install
-#NGINX_BACKEND_LOGIN=login
+#NGINX_BACKEND_DIRECTORY=dashboard|login|install
+#NGINX_BACKEND_COOKIE=CONCRETE5|CONCRETE5_INSTALL_TEST|dashboardPanelStatus
 #
 # -- Nginx Referers URI
 NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ wordpress\.com
@@ -197,6 +189,8 @@ NGINX_EXPIRES_DAY=7d
 NGINX_LOG_NOT_FOUND=off
 #
 # -- MariaDB Edit.
+DB_BUFFER_POOL_SIZE=128M
+DB_LOG_FILE_SIZE=32M
 DB_STORAGE_ENGINE=InnoDB
 #
 ###############################################################################
