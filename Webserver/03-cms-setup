@@ -170,6 +170,8 @@ vim ${NGINX_CONFIG_DIRECTORY}/06-httpv2.conf
 # HTTP/2.0
 cat <<EOF> /etc/nginx/httpv2_param
     http2_max_concurrent_streams 128;
+    http2_max_field_size 4k;
+    http2_max_header_size 16k;
     http2_recv_timeout 30s;
     http2_idle_timeout 3m;
     http2_chunk_size 8k;
@@ -231,6 +233,60 @@ if ( \$referrerspam = 1) {
 }
 EOF
 vim /etc/nginx/referrer_deny
+#
+echo -e "Mobile UA Setup"
+cat <<EOF > /etc/nginx/mobile_ua
+    # Mobile UA Setup
+    #
+    set \$mobile "";
+    if (\$http_user_agent ~* "DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter") {
+        set \$mobile ".kt";
+    }
+    if (\$http_user_agent ~* "iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone") {
+        set \$mobile ".sp";
+    }
+EOF
+vim /etc/nginx/mobile_ua
+#
+echo -e "Cache Setup"
+cat <<EOF > /etc/nginx/not_cache
+        # Cache Setup
+        #
+        set \$do_not_cache       0;
+        if (\$request_method != "GET") {
+            set \$do_not_cache    1;
+        }
+        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}|${NGINX_BACKEND_LOGIN})') {
+            set \$do_not_cache   1;
+        }
+        # WordPress
+        if (\$http_cookie ~* '(comment_author_|wordpress_(?!test_cookie)|wp-postpass_)' ) {
+            set \$do_not_cache   1;
+        }
+EOF
+vim /etc/nginx/not_cache
+#
+echo -e "HTTP Method Deny / Cache Control Setup"
+cat <<EOF > /etc/nginx/set_header_control
+        # HTTP Method Deny
+        #
+        if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
+            return 444;
+        }
+
+        # Referrer Spam Deny
+        #
+        include referrer_deny;
+
+        # Cache Control
+        #
+        add_header Cache-Control "public, max-age=${NGINX_BACKEND_CACHE_RELOAD}";
+
+        # HSTS
+        #
+        add_header Strict-Transport-Security "max-age=31536000";
+EOF
+vim /etc/nginx/set_header_control
 #
 ############################################################################
 echo -e "CMS Install for WordPress [y] / concrete5 [n]"
@@ -387,6 +443,18 @@ server {
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
 
+    # Cache Setup
+    #
+    include not_cache;
+
+    # Mobile UA Setup
+    #
+    include mobile_ua;
+
+    # Header Control
+    #
+    include set_header_control;
+
     location = /*\.(${NGINX_LOCATION_ASCII_FILE}) {
         access_log      ${NGINX_LOCATION_LOG};
         expires         ${NGINX_EXPIRES_DAY};
@@ -431,15 +499,15 @@ server {
 
     location ~ /xmlrpc.php {
         valid_referers    *.wordpress.com;
-        if ($invalid_referer) {
+        if (\$invalid_referer) {
             return 444;
         }
-        proxy_pass      https://$host.backend;
+        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
     }
 
     location ~ /uploads/ {
         valid_referers    ${NGINX_REFERERS_URI};
-        if ($invalid_referer) {
+        if (\$invalid_referer) {
             return 403;
         }
     }
@@ -456,42 +524,6 @@ server {
         #
         try_files \$uri \$uri/ /index.php?\$args;
 
-        # HTTP Method Deny
-        #
-        if (\$request_method !~ ^(GET|HEAD|POST)\$ ) {
-            return 444;
-        }
-        # Cache Control
-        #
-        add_header Cache-Control "public, max-age=${NGINX_BACKEND_CACHE_RELOAD}";
-
-        # Cache Setup
-        #
-        set \$do_not_cache       0;
-        if (\$request_method != "GET") {
-            set \$do_not_cache    1;
-        }
-        if (\$uri ~* '/(${NGINX_BACKEND_DIRECTORY}|${NGINX_BACKEND_LOGIN})') {
-            set \$do_not_cache   1;
-        }
-        # WordPress
-        if (\$http_cookie ~* '(comment_author_|wordpress_(?!test_cookie)|wp-postpass_)' ) {
-            set \$do_not_cache   1;
-        }
-        # Mobile UA Setup
-        #
-        set \$mobile "";
-        if (\$http_user_agent ~* '(DoCoMo|J-PHONE|Vodafone|MOT-|UP\.Browser|DDIPOCKET|ASTEL|PDXGW|Palmscape|Xiino|sharp pda browser|Windows CE|L-mode|WILLCOM|SoftBank|Semulator|Vemulator|J-EMULATOR|emobile|mixi-mobile-converter)') {
-            set \$mobile ".kt";
-        }
-        if (\$http_user_agent ~* '(iPhone|iPod|Opera Mini|Android.*Mobile|NetFront|PSP|BlackBerry|Windows Phone)') {
-            set \$mobile ".sp";
-        }
-
-        # Referrer Spam Deny
-        #
-        include referrer_deny;
-
         # REVERSE PROXY SETUP
         #
         proxy_no_cache           \$do_not_cache;
@@ -499,7 +531,6 @@ server {
         proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
         proxy_cache              cache_${CONFIG_HOST_DOMAIN};
         proxy_pass               ${NGINX_SCHEMA}\$host.backend;
-
     }
 
     # redirect server error pages to the static page /403.html
