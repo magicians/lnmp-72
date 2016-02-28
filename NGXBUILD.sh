@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-72 v1.0.2
+#### lnmp-72 v1.0.5
 source ./nginx-build.txt
 ## Nginx Build on User Directory.
 echo "Start Nginx Build"
@@ -43,7 +43,7 @@ sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default_conf
 sudo mv /etc/nginx/conf.d/example_ssl.conf /etc/nginx/conf.d/example_ssl_conf
 # SNI Check
 sudo nginx -V 2>&1 | grep SNI
-#sudo nginx -V 2>&1 | grep v2
+sudo nginx -V 2>&1 | grep v2
 # TLS SNI support enabled
 # http2 / v2_module
 # http://nginx.org/en/docs/http/ngx_http_v2_module.html

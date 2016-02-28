@@ -1,12 +1,12 @@
 #!/bin/bash
-#### lnmp-72 v1.0.2
+#### lnmp-72 v1.0.5
 source ./initfile
 ####
 chmod 600 ${INSTALL_PATH}/initfile
 chmod 600 ${INSTALL_PATH}/text/*.txt
 ln -s ${INSTALL_PATH}/text/default.txt ${INSTALL_PATH}/default.txt
 ln -s ${INSTALL_PATH}/text/server.txt ${INSTALL_PATH}/server.txt
-ln -s ${INSTALL_PATH}/text/cms.txt ${INSTALL_PATH}/cms.txt
+ln -s ${INSTALL_PATH}/text/database.txt ${INSTALL_PATH}/database.txt
 ln -s ${INSTALL_PATH}/text/nginx-build.txt ${INSTALL_PATH}/nginx-build.txt
 ln -s ${INSTALL_PATH}/text/deny_spam.txt ${INSTALL_PATH}/deny_spam.txt
 chmod 400 ${INSTALL_PATH}/last_optimization

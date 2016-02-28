@@ -1,18 +1,10 @@
-#### lnmp-72 v1.0.2
+#### lnmp-72 v1.0.5
 ###############################################################################
 ## 2.WebServer Environment Variable. / Backend --
 ###############################################################################
 ## -- 2-1. HostName Setup Config.
 # -- HOST DOMAIN
 CONFIG_HOST_DOMAIN=${SETUP_WEBSERVER_HOSTNAME}
-#
-## -- Server Static IP
-# -- SSL
-FRONTEND_SERVER_PORT=${SERVER_STATIC_IP_ADDR}:443
-#
-## -- Backend Listen Port.
-BACKEND_LISTEN_PORT=${REVERSE_PROXY_PORT}
-BACKEND_SERVER_PORT=127.0.0.1:${REVERSE_PROXY_PORT}
 #
 ## -- PHP-FPM UNIX SOCKET
 BACKEND_LISTEN_SOCK=/var/run/php-fpm/www.sock
@@ -116,7 +108,7 @@ GEOIP_FILE=GeoIP.dat
 GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
 #
 ###############################################################################
-## 2-6. LNMP / Nginx Setup Config. / Nginx --
+## 2-6-1. LNMP / Nginx Setup Config. / Nginx --
 ###############################################################################
 # -- Nginx Worker Process xx
 #NGINX_WORKER_PROCESSES=1
@@ -126,67 +118,8 @@ NGINX_WORKER_PROCESSES=auto
 # -- Nginx worker_cpu_affinity auto / ver.1.9.10 ~ | 010 010 / ~ ver.1.9.9
 #NGINX_WORKER_CPU_AFFINITY=010\ 010
 NGINX_WORKER_CPU_AFFINITY=auto
-# -- worker_priority 10
-NGINX_WORKER_PRIORITY=10
-#
-# -- UPSTREAM KEEPALIVE
-NGINX_KEEPALIVE_TIMEOUT=5
-NGINX_KEEPALIVE_UPSTREAM=10
-#
-# -- SSL or Normal
-NGINX_SCHEMA=https://
-#
-# -- Nginx Config Directory.
-NGINX_BASE_DIRECTORY=/etc/nginx
-NGINX_CONFIG_DIRECTORY=/etc/nginx/conf.d
-#
-# -- Nginx Default Setting.
-NGINX_INDEX_FILE_LIST=index\.php\ index\.html\ index\.htm
-NGINX_DEFAULT_CHARSET=utf-8
-#
-# -- Nginx Proxy Cache.
-NGINX_PROXY_CACHE_PATH=/var/www/cache
-NGINX_PROXY_CACHE_TEMP=/var/www/tmp
-#
-# -- Nginx Header Setup.
-NGINX_HEADER_X_FRAME_OPT=DENY
-NGINX_HEADER_X_CONTENT_TYPE_OPT=nosniff
-NGINX_HEADER_X_XSS_PROTECT=1\;\ mode=block
-NGINX_HEADER_CONTENT_SP=default-src\ \'self\'\;\ script-src\ \'self\'\ \'unsafe-inline\'\ \'unsafe-eval\'\ https\:\/\/ssl\.google-analytics\.com\;\ img-src\ \'self\'\ https\:\/\/ssl\.google-analytics\.com\;\ style-src\ \'self\'\ \'unsafe-inline\'\ https\:\/\/fonts\.googleapis\.com\ \'self\'\ https\:\/\/themes\.googleusercontent\.com\;\ frame-src\ \'none\'\ object-src\ \'none\'
-#
-# -- Nginx Client Buffer Setup.
-NGINX_CLIENT_BODY=8k
-NGINX_CLIENT_HEAD=1k
-NGINX_CLIENT_MAXBODY=1m
-NGINX_LARGE_CLIENT_NUM=8
-NGINX_LARGE_CLIENT_HEAD=8k
-NGINX_PROXY_BUFFER_SIZE=16k
-#
-## -- Nginx Cache Reload Time
-NGINX_BACKEND_CACHE_RELOAD=86400
-#
-# -- Nginx Backend URI / WordPress
-NGINX_BACKEND_DIRECTORY=/wp-admin/|/xmlrpc.php|wp-.*.php|/wp-login.php
-NGINX_BACKEND_COOKIE=comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_no_cache|wordpress_logged_in
-#
-# -- Nginx Backend URI / concrete5
-#NGINX_BACKEND_DIRECTORY=dashboard|login|install
-#NGINX_BACKEND_COOKIE=CONCRETE5|CONCRETE5_INSTALL_TEST|dashboardPanelStatus
-#
-# -- Nginx Referers URI
-NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ wordpress\.com
-#
-# -- Nginx Deny File and Dir.
-NGINX_DENY_ALL_DIR=ht\|git\|svn
-#
-# -- Nginx Cache File Setting.
-NGINX_LOCATION_ASCII_FILE=txt\|xml\|html\?\|js\|css\|gz
-NGINX_LOCATION_BINARY_FILE=ico\|jpe\?g\|gif\|png\|wmv\|flv\|mpg
-#
-# -- Nginx Location Logging.
-NGINX_LOCATION_LOG=off
-NGINX_EXPIRES_DAY=7d
-NGINX_LOG_NOT_FOUND=off
+# -- worker_priority -20 ~ 19
+NGINX_WORKER_PRIORITY=0
 #
 # -- MariaDB Edit.
 DB_BUFFER_POOL_SIZE=128M

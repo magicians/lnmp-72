@@ -1,11 +1,11 @@
 #!/bin/bash
-#### lnmp-72 v1.0.2
+#### lnmp-72 v1.0.5
 ############################################################################
 source ./initfile
 source ./default.txt
 source ./server.txt
+source ./database.txt
 source ./deny_spam.txt
-source ./cms.txt
 ############################################################################
 clear
 # Default GZIP Setting.
@@ -42,61 +42,24 @@ cat <<EOF > ${NGINX_CONFIG_DIRECTORY}/01-GeoIP.conf
 EOF
 vim ${NGINX_CONFIG_DIRECTORY}/01-GeoIP.conf
 #
-# Default Proxy Setting.
-echo -e "02 Default Proxy Setting."
-cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/02-proxy.conf
-    # REVERSE PROXY SETUP
-    # proxy_redirect        off;
-    # 下記をいれていないとキャッシュが生成されない事がある。
-    proxy_ignore_headers  X-Accel-Redirect X-Accel-Expires Cache-Control Expires Set-Cookie;
-    proxy_cache_path      ${NGINX_PROXY_CACHE_PATH} levels=1:2 keys_zone=cache_${CONFIG_HOST_DOMAIN}:4m max_size=50m inactive=120m;
-    proxy_temp_path       ${NGINX_PROXY_CACHE_TEMP};
-    proxy_buffering       on;
-    proxy_buffer_size     ${NGINX_PROXY_BUFFER_SIZE};
-    proxy_buffers         ${NGINX_LARGE_CLIENT_NUM} ${NGINX_PROXY_BUFFER_SIZE};
-    proxy_cache_valid     200 10m;
-    proxy_cache_valid     404 5m;
-    proxy_set_header      Host               \$host;
-    proxy_set_header      X-Real-IP          \$remote_addr;
-    proxy_set_header      X-Forwarded-Host   \$host;
-    proxy_set_header      X-Forwarded-Server \$host;
-    proxy_set_header      X-Forwarded-For    \$proxy_add_x_forwarded_for;
-    proxy_set_header      X-Forwarded-Proto  \$scheme;
-    proxy_set_header      Connection         '';
-    proxy_http_version    1.1;
-EOF
-vim ${NGINX_CONFIG_DIRECTORY}/02-proxy.conf
-#
-# Default Backend Setting.
-echo -e "03 Default Backend Setting."
-cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
-    #default upstream setup.
-    upstream ${CONFIG_HOST_DOMAIN}.backend {
-            ip_hash;
-            server      ${BACKEND_SERVER_PORT};
-            keepalive   ${NGINX_KEEPALIVE_UPSTREAM};
-    }
-EOF
-vim ${NGINX_CONFIG_DIRECTORY}/03-backend.conf
-####
 echo -e "04 Header Secure Setup."
-cat <<EOF > /etc/nginx/conf.d/04-header.conf
+cat <<EOF > /etc/nginx/conf.d/02-header.conf
 # Header Secure Setup
 add_header X-Frame-Options ${NGINX_HEADER_X_FRAME_OPT};
 add_header X-Content-Type-Options ${NGINX_HEADER_X_CONTENT_TYPE_OPT};
 add_header X-XSS-Protection "${NGINX_HEADER_X_XSS_PROTECT}";
 add_header Content-Security-Policy "${NGINX_HEADER_CONTENT_SP}";
 EOF
-vim /etc/nginx/conf.d/04-header.conf
+vim /etc/nginx/conf.d/02-header.conf
 ####
 echo -e "05 Header Buffer Setup."
-cat <<EOF > /etc/nginx/conf.d/05-buffer.conf
+cat <<EOF > /etc/nginx/conf.d/03-buffer.conf
 client_body_buffer_size ${NGINX_CLIENT_BODY};
 client_header_buffer_size ${NGINX_CLIENT_HEAD};
 client_max_body_size ${NGINX_CLIENT_MAXBODY};
 large_client_header_buffers ${NGINX_LARGE_CLIENT_NUM} ${NGINX_LARGE_CLIENT_HEAD};
 EOF
-vim /etc/nginx/conf.d/05-buffer.conf
+vim /etc/nginx/conf.d/03-buffer.conf
 ####
 clear
 ############################################################################
@@ -158,13 +121,13 @@ EOF
 vim /etc/nginx/https_param
 ############################################################################
 ############################################################################
-echo "Nginx Setup HTTP/2.0"
+echo -e "Nginx Setup HTTP/2.0"
 #
-cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/06-h2.conf
+cat <<EOF> ${NGINX_CONFIG_DIRECTORY}/04-h2.conf
     #Sets the size of the per worker input buffer.
     http2_recv_buffer_size 256k;
 EOF
-vim ${NGINX_CONFIG_DIRECTORY}/06-h2.conf
+vim ${NGINX_CONFIG_DIRECTORY}/04-h2.conf
 #
 cat <<EOF> /etc/nginx/h2_param
     http2_max_concurrent_streams 128;
@@ -280,7 +243,7 @@ cat <<EOF > /etc/nginx/php_fpmd
 # PHP-FPM SSL Setting.
 #
     location ~ \.php$ {
-        try_files               \$uri =404;
+        try_files               \$uri @wp_permalink;
         include                 /etc/nginx/fastcgi_params;
         fastcgi_pass            unix:${BACKEND_LISTEN_SOCK};
         fastcgi_index           index.php;
@@ -293,6 +256,23 @@ cat <<EOF > /etc/nginx/php_fpmd
 EOF
 #
 vim /etc/nginx/php_fpmd
+#
+cat <<EOF > /etc/nginx/wp_permalink
+# WP-PERMALINK SSL Setting.
+#
+    location @wp_permalink {
+        include                 /etc/nginx/fastcgi_params;
+        fastcgi_pass            unix:${BACKEND_LISTEN_SOCK};
+        fastcgi_index           index.php;
+        fastcgi_split_path_info ^(.+\.php)(.*)$;
+        fastcgi_param           SCRIPT_FILENAME ${APACHE_FILE_DIRECTORY}/index.php;
+        fastcgi_param           HTTPS on;
+        fastcgi_pass_header     "X-Accel-Redirect";
+        fastcgi_pass_header     "X-Accel-Expires";
+    }
+EOF
+#
+vim /etc/nginx/wp_permalink
 # WordPress
 ############################################################################
 echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP."
@@ -343,33 +323,6 @@ server {
 
 }
 
-#### Backend Config.
-##
-server {
-    listen      ${REVERSE_PROXY_PORT} ssl;
-    listen      [::]:${REVERSE_PROXY_PORT} ssl;
-    server_name ${CONFIG_HOST_DOMAIN};
-
-    # SSL PARAM
-    include https_param;
-
-    root   ${APACHE_FILE_DIRECTORY};
-    index ${NGINX_INDEX_FILE_LIST};
-    charset ${NGINX_DEFAULT_CHARSET};
-
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_back.log;
-
-    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
-
-    gzip         off;
-    gzip_vary    off;
-
-    # php-fpm Setup
-    #
-    include php_fpmd;
-
-}
-
 #### SSL Config.
 ##
 server {
@@ -413,7 +366,7 @@ server {
     }
 
     location = /google([a-f0-9]\.html) {
-        valid_referers    *.google.com;
+        valid_referers   ${CONFIG_HOST_DOMAIN} *.google.com;
         if (\$invalid_referer) {
             return 403;
         }
@@ -427,22 +380,20 @@ server {
     }
 
     location / {
-        try_files \$uri \$uri/ @wordpress;      
+        try_files \$uri \$uri/ @wp_permalink; 
     }
 
-    location @wordpress {
-        proxy_no_cache           \$do_not_cache;
-        proxy_cache_bypass       \$do_not_cache;
-        proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
-        proxy_cache              cache_${CONFIG_HOST_DOMAIN};
-        proxy_pass               ${NGINX_SCHEMA}\$host.backend;
-    }
+    # PHP-FPM
+    include php_fpmd;
+
+    # WP-PERMALINK
+    include wp_permalink;
 
     # SSL Admin Area Setup
     # WordPress Admin Directory
-    location /${NGINX_BACKEND_DIRECTORY} {
+    location ~ /(${NGINX_BACKEND_DIRECTORY}) {
         # JetPack
-        valid_referers    wordpress.com;
+        valid_referers    ${CONFIG_HOST_DOMAIN} wordpress.com;
         if (\$invalid_referer) {
             return 403;
         }
@@ -450,30 +401,31 @@ server {
         if (\$allowed_country != yes) {
             return 444;
         }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
+        allow           127.0.0.1;
+        allow           ${SERVER_STATIC_IP_ADDR};
+        allow           ${GLOBAL_IP_ADDR};
+        deny            all;
+        gzip            off;
+        gzip_vary       off;
         access_log      off;
         log_not_found   off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
     }
 
     location ~ /uploads/ {
-        valid_referers    ${NGINX_REFERERS_URI};
+        valid_referers   ${CONFIG_HOST_DOMAIN} ${NGINX_REFERERS_URI};
         if (\$invalid_referer) {
             return 403;
         }
     }
 
     # WordPress no Admin for HTTP
-    if (\$uri ~ '/author') {
+    if (\$request_uri ~ '/author') {
         rewrite ^(.*)?$ https://\$host last;
         break;
     }
 
     # WordPress Config Files Access Setup
-    location ~ /(wp-config\.php|wp-mail\.php|wp-cron\.php|install\.php) {
+    location ~ /(wp-config|wp-mail|wp-cron|install)\.php {
         allow   127.0.0.1;
         allow   ${SERVER_STATIC_IP_ADDR};
         deny    all;
@@ -598,23 +550,43 @@ else
 echo "$C5_VERSION install start."
 ############################################################################
 # concrete5
-echo -e "Nginx PHP-FPM Setup for $C5_VERSION"
+echo -e "Nginx PHP-FPM Setup."
 cat <<EOF > /etc/nginx/php_fpmd
 # PHP-FPM SSL Setting.
 #
     location ~ \.php(\$|/) {
-        include             /etc/nginx/fastcgi_params;
-        fastcgi_pass        unix:${BACKEND_LISTEN_SOCK};
-        fastcgi_index       index.php;
+        try_files               \$uri @pretty_url;
+        include                 /etc/nginx/fastcgi_params;
+        fastcgi_pass            unix:${BACKEND_LISTEN_SOCK};
+        fastcgi_index           index.php;
         fastcgi_split_path_info ^(.+\.php)(.*)$;
-        fastcgi_param       SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-        fastcgi_param       HTTPS on;
-        fastcgi_pass_header "X-Accel-Redirect";
-        fastcgi_pass_header "X-Accel-Expires";
+        fastcgi_param           SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param           HTTPS on;
+        #fastcgi_pass_header     "X-Accel-Redirect";
+        #fastcgi_pass_header     "X-Accel-Expires";
     }
 EOF
 #
 vim /etc/nginx/php_fpmd
+#
+cat <<EOF > /etc/nginx/pretty_url
+# PRETTY-URL SSL Setting.
+#
+    location @pretty_url {
+        include                 /etc/nginx/fastcgi_params;
+        fastcgi_pass            unix:${BACKEND_LISTEN_SOCK};
+        fastcgi_index           index.php;
+        fastcgi_split_path_info ^(.+\.php)(.*)$;
+        fastcgi_param           SCRIPT_FILENAME ${APACHE_FILE_DIRECTORY}/index.php;
+        fastcgi_param           HTTPS on;
+        #fastcgi_pass_header     "X-Accel-Redirect";
+        #fastcgi_pass_header     "X-Accel-Expires";
+    }
+EOF
+#
+vim /etc/nginx/pretty_url
+# WordPress
+
 # concrete5
 ############################################################################
 echo -e "${CONFIG_HOST_DOMAIN} SSL PARAM SETUP."
@@ -662,33 +634,6 @@ server {
     location = /50x.html {
         root   ${APACHE_ERROR_DIRECTORY};
     }
-
-}
-
-#### Backend Config.
-##
-server {
-    listen      ${REVERSE_PROXY_PORT} ssl;
-    listen      [::]:${REVERSE_PROXY_PORT} ssl;
-    server_name ${CONFIG_HOST_DOMAIN};
-
-    # SSL PARAM
-    include https_param;
-
-    root   ${APACHE_FILE_DIRECTORY};
-    index ${NGINX_INDEX_FILE_LIST};
-    charset ${NGINX_DEFAULT_CHARSET};
-
-    access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_HOST_DOMAIN}_back.log;
-
-    location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
-
-    gzip         off;
-    gzip_vary    off;
-
-    # php-fpm Setup
-    #
-    include php_fpmd;
 
 }
 
@@ -749,40 +694,50 @@ server {
     }
 
     location / {
-        try_files \$uri \$uri/ @concrete5;
+        try_files \$uri \$uri/ @pretty_url;
     }
 
-    location @concrete5 {
-        proxy_no_cache           \$do_not_cache;
-        proxy_cache_bypass       \$do_not_cache;
-        proxy_cache_key          "\$scheme://\$host\$request_uri\$is_args\$args\$mobile";
-        proxy_cache              cache_${CONFIG_HOST_DOMAIN};
-        proxy_pass               ${NGINX_SCHEMA}\$host.backend;
-    }
+    # PHP-FPM
+    include php_fpmd;
+
+    # PRETTY-URL
+    include pretty_url;
 
     # SSL Admin Area Setup
     # WordPress Admin Directory
-    location /${NGINX_BACKEND_DIRECTORY} {
+    location ~ /(${NGINX_BACKEND_DIRECTORY}) {
+        # API
+        valid_referers    ${CONFIG_HOST_DOMAIN} *.concrete5.org *.concrete5-japan.org *.google.com;
+        if (\$invalid_referer) {
+            return 403;
+        }
         # GeoIP
         if (\$allowed_country != yes) {
             return 444;
         }
-        allow   127.0.0.1;
-        allow   ${SERVER_STATIC_IP_ADDR};
-        allow   ${GLOBAL_IP_ADDR};
-        deny    all;
+        allow           127.0.0.1;
+        allow           ${SERVER_STATIC_IP_ADDR};
+        allow           ${GLOBAL_IP_ADDR};
+        deny            all;
+        gzip            off;
+        gzip_vary       off;
         access_log      off;
         log_not_found   off;
-        proxy_pass      ${NGINX_SCHEMA}\$host.backend;
     }
 
     # concrete5
     location ~ /files/ {
-        valid_referers    ${NGINX_REFERERS_URI};
+        valid_referers    ${CONFIG_HOST_DOMAIN} ${NGINX_REFERERS_URI};
         if (\$invalid_referer) {
             return 403;
         }
     }
+
+    # WordPress no Admin for HTTP
+    #if (\$request_uri ~ '/author') {
+    #    rewrite ^(.*)?$ https://\$host last;
+    #    break;
+    #}
 
     # concrete5 Config Files Access Setup
     location ~ /(config|database.php) {
