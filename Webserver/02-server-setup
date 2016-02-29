@@ -4,6 +4,7 @@
 source ./initfile
 source ./default.txt
 source ./server.txt
+source ./deny_spam.txt
 ############################################################################
 echo -e "Jp: WebServer(Nginx)をインストールします。[y] / 既に一回このシェルを通している場合は [n]"
 echo -e "En: It will install the WebServer (Nginx). [y] / Already one time when it is passed through the shell [n]"
@@ -152,6 +153,24 @@ cat <<EOF > ${APACHE_MOD_CONFIG_DIRECTORY}/99-nginx.conf
 EOF
 vim ${APACHE_MOD_CONFIG_DIRECTORY}/99-nginx.conf
 #
+cat <<EOF> ${APACHE_CONFIG_DIRECTORY}/referer_spam.conf
+# Referer Spam Deny All.
+#
+    SetEnvIfNoCase Referer ${RefererSpam00} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam02} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam03} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam04} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam05} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam06} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam07} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam08} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam09} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam10} referrerspam=yes
+    SetEnvIfNoCase Referer ${RefererSpam11} referrerspam=yes
+EOF
+#
+vim ${APACHE_CONFIG_DIRECTORY}/referer_spam.conf
+#
 # extract_forwarded Comment Out.
 echo -e "extract_forwarded Comment Out."
 sed -i 's|^LoadModule extract_forwarded_module /usr/lib64/httpd/modules/mod_extract_forwarded.so$|#\0|g' ${APACHE_BASE_CONFIG_DIRECTORY}/httpd.conf
@@ -196,6 +215,19 @@ cat <<EOF > ${APACHE_CONFIG_DIRECTORY}/geoip.conf
   GeoIPDBFile ${GEOIP_PATH}/${GEOIP_FILE} MemoryCache
   GeoIPDBFile ${GEOIP_PATH}/${GEOIP_FILE} CheckCache
 </IfModule>
+
+<Location "/">
+  Order Deny,Allow
+  Include ${APACHE_CONFIG_DIRECTORY}/referer_spam.conf
+  Deny from env=referrerspam
+  Deny from all
+  # GeoIP
+  SetEnvIf GEOIP_COUNTRY_CODE ${GEOIP_COUNTRY} AllowCountry
+  # Japan Only.
+  Allow from env=AllowCountry
+  Allow from ${GLOBAL_IP_ADDR}
+</Location>
+
 #Logs
 LogFormat "%a [%h] %u %t %D \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"   GeoIP_Address=\"%{GEOIP_ADDR}e\" Country_Code=\"%{GEOIP_COUNTRY_CODE}e\" Country_Name=\"%{GEOIP_COUNTRY_NAME}e\"" combined
 EOF
