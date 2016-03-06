@@ -2,7 +2,7 @@
 CentOS7.2 + Nginx + MariaDB + PHP7    
 ====
 ## Setup
-** 1. ** git clone git://github.com/hisanuco/lamp-72c.git install  
+** 1. ** git clone git://github.com/hisanuco/lnmp-72.git install  
 
 ** 2. ** vi lnmp72_command.txt    
 
