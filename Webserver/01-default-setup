@@ -23,8 +23,8 @@ if [ ${set_connection_ip} = "y" ] ; then
 	echo "ALL: ALL" >> /etc/hosts.deny
 fi
 ############
-fi
 vi /etc/hosts.allow && vi /etc/hosts.deny
+fi
 ####
 ############################################################################
 #### アクセス権限をユーザに付与。
@@ -400,33 +400,28 @@ yum clean all
 # etckeeper init
 etckeeper init
 etckeeper commit "VPS Installed First Commit."
-#
-fi
 # CentOS7.2 Error Log
 sed -i "s|authpriv.*|#\0|g" /etc/rsyslog.conf
 sed -i "57a\authpriv.notice                                          /var/log/secure" /etc/rsyslog.conf
 vim /etc/rsyslog.conf
+fi
 #
 ############################################################################
 #### denyhosts install. Denyhosts の追加。
 ############################################################################
 #
-echo -e "Jp: denyhostsのインストールを開始します。"
-echo -e "En: It will start the installation of denyhosts."
-yum -y install denyhosts
-#
-############################################################################
-#
-echo -e "Sakura Simple Monitoring Setup? [ y/n ]"
+echo -e "Jp: denyhostsのインストールを開始します。[y/n]"
+echo -e "En: It will start the installation of denyhosts.[y/n]"
 read set_sakurasms
 if [ ${set_sakurasms} = "y" ] ; then
+yum -y install denyhosts
 echo "${GLOBAL_IP_ADDR}" >> /var/lib/denyhosts/allowed-hosts
 echo "${MONITORING_SERVER_IPADDR}" >> /var/lib/denyhosts/allowed-hosts
 vim /var/lib/denyhosts/allowed-hosts
-fi
 systemctl enable denyhosts
 systemctl start denyhosts
 systemctl is-enabled denyhosts
+fi
 #
 ############################################################################
 ############################################################################
@@ -501,7 +496,7 @@ if [ ${set_tripwire_inst} = "y" ] ; then
 yum -y install tripwire
 tripwire-setup-keyfiles
 sed -i 's/^LOOSEDIRECTORYCHECKING\s\+=false$/LOOSEDIRECTORYCHECKING =true/' /etc/tripwire/twcfg.txt
-twadmin -m F -c /etc/tripwire/tw.cfg ${INITSITEPASS} -S /etc/tripwire/site.key /etc/tripwire/twcfg.txt
+twadmin -m F -c /etc/tripwire/tw.cfg -S /etc/tripwire/site.key /etc/tripwire/twcfg.txt
 #
 cat <<EOF > /etc/tripwire/twpolmake.pl
 #!/usr/bin/perl
@@ -566,12 +561,12 @@ EOF
 #
 vim /etc/tripwire/twpolmake.pl
 perl /etc/tripwire/twpolmake.pl /etc/tripwire/twpol.txt > /etc/tripwire/twpol.txt.new
-twadmin -m P -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol ${INITSITEPASS} -S /etc/tripwire/site.key /etc/tripwire/twpol.txt.new
+twadmin -m P -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol -S /etc/tripwire/site.key /etc/tripwire/twpol.txt.new
 #
 rm -f /etc/tripwire/twcfg.txt*
 rm -f /etc/tripwire/twpol.txt*
-tripwire -m i -s -c /etc/tripwire/tw.cfg ${INITLOCALPASS}
-tripwire --init ${INITLOCALPASS}
+tripwire -m i -s -c /etc/tripwire/tw.cfg
+tripwire --init
 tripwire --check
 #
 ## crontab set tripwire.sh Cronで定期的にチェックさせる
