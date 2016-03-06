@@ -1,22 +1,23 @@
 # lnmp-72
 CentOS7.2 + Nginx + MariaDB + PHP7    
-
+====
 ## Setup
 ** 1. ** git clone git://github.com/hisanuco/lamp-72c.git install  
 
-** 2. ** sed -i "s|^USER_NAME=root$|#\0|g" initfile && sed -i "s|^#USER_NAME=$|USER_NAME=$(echo `pwd` | sed -e 's|/home/||' | sed -e 's|/install||' )|g" initfile && vi initfile && sh startup  
+** 2. ** vi lnmp72_command.txt    
 
-** 3. ** sed -i "s|^SETUP_WEBSERVER_HOSTNAME=localhost.localdomain$|SETUP_WEBSERVER_HOSTNAME=${HOSTNAME}|g" base.txt  
+** 3. ** vi server.txt && vi cms.txt    
 
-** 4. ** sed -i "s|^SERVER_STATIC_IP_ADDR=$|SERVER_STATIC_IP_ADDR=$(/sbin/ip -o route get 255.255.255.255 | /bin/grep -Eo 'src\s+\S+' | /bin/awk '{print $2}')|g" base.txt  
+** 4-1. ** sudo ./01.DEFAULT-SETUP.sh    
 
-** 5. ** vi base.txt && vi server.txt && vi data.txt   
+** 4-2. ** sudo ./O2.WEBSERVER-SETUP.sh / ./NGXBUILD.sh :Nginx Install.    
 
-** 6. ** sudo sh 01.DEFAULT-SETUP.sh && sh O2.WEBSERVER-SETUP.sh && sh 03.DB-SETUP.sh  
+** 4-3. ** sudo ./03.DB-SETUP.sh    
 
-** 7. ** WebBrowser / ownCloud Install.  
+** 5. ** CMS Install.
 
-** 8. ** sudo sh last_optimization ( reboot )  
+** 7. ** sudo sh last_optimization ( reboot )  
 
 ====
-**Version v1.0.6**  
+
+**Version v1.0.7**  

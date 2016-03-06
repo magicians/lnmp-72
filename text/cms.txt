@@ -1,4 +1,4 @@
-#### lnmp-72 v1.0.6
+#### lnmp-72 v1.0.7
 ###############################################################################
 ## 10. Nginx Setup Config.
 ###############################################################################
@@ -43,7 +43,7 @@ NGINX_BACKEND_COOKIE=comment_author\|wordpress_\[a-f0-9\]\+\|wp-postpass\|wordpr
 NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ wordpress\.com
 #
 # -- Nginx Deny File and Dir.
-NGINX_DENY_ALL_DIR=ht\|git\|svn
+NGINX_DENY_ALL_DIR=ht\|git\|svn\|user\.ini\|php\.ini
 #
 # -- Nginx Cache File Setting.
 NGINX_LOCATION_ASCII_FILE=txt\|xml\|html\?\|js\|css\|gz

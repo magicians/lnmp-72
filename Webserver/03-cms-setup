@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-72 v1.0.6
+#### lnmp-72 v1.0.7
 ############################################################################
 source ./initfile
 source ./config_init.txt
@@ -90,36 +90,7 @@ openssl dhparam -out ${FRONT_SSL_DH} 4096
 fi
 chown nginx ${FRONT_SSL_DH}
 chmod 700 ${FRONT_SSL_DH}
-############################################################################
-clear
-echo -e "SSL PARAM SETUP."
-cat <<EOF > /etc/nginx/https_param
-    ssl                          on;
-    ssl_certificate              ${FRONT_SSL_CERT};
-    ssl_certificate_key          ${FRONT_SSL_KEY};
-    ssl_dhparam                  ${FRONT_SSL_DH};
-
-    # HSTS
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
-
-    ssl_prefer_server_ciphers    on;
-
-    ssl_session_cache shared:SSL:${FRONT_SSL_SESSION};
-    ssl_session_timeout          ${FRONT_SSL_SESSION};
-
-    ssl_protocols ${ALL_SSL_PROTOCOLS};
-    ssl_ciphers ${ALL_SSL_CIPHERS};
-
-    ssl_stapling                 on;
-    ssl_stapling_verify          on;
-    ssl_trusted_certificate      ${FRONT_SSLCA_CERT};
-    resolver                     ${SETUP_VPS_DNS_PRI_IP} ${SETUP_VPS_DNS_SEC_IP} valid=300s;
-
-    # TERTIARY DNS: ${SETUP_VPS_DNS_TER_IP}
-
-    resolver_timeout             10s;
-EOF
-vim /etc/nginx/https_param
+#
 ############################################################################
 ############################################################################
 echo -e "Nginx Setup HTTP/2.0"
@@ -244,16 +215,26 @@ cat <<EOF > /etc/nginx/php_fpmd
 # PHP-FPM SSL Setting.
 #
     location ~ \.php$ {
-        try_files               \$uri @wp_permalink;
-        include                 /etc/nginx/fastcgi_params;
-        fastcgi_pass            unix:${BACKEND_LISTEN_SOCK};
-        fastcgi_index           index.php;
-        fastcgi_split_path_info ^(.+\.php)(.*)$;
-        fastcgi_param           SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-        fastcgi_param           HTTPS on;
-        #fastcgi_pass_header     "X-Accel-Redirect";
-        #fastcgi_pass_header     "X-Accel-Expires";
+        try_files                       \$uri @wp_permalink;
+        include                         /etc/nginx/fastcgi_params;
+        fastcgi_pass                    unix:${BACKEND_LISTEN_SOCK};
+        fastcgi_index                   index.php;
+        fastcgi_split_path_info         ^(.+\.php)(.*)$;
+        fastcgi_param                   SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_intercept_errors        on;
+        fastcgi_ignore_client_abort     off;
+        fastcgi_connect_timeout         60;
+        fastcgi_send_timeout            180;
+        fastcgi_read_timeout            180;
+        fastcgi_buffer_size             ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_buffers                 ${NGINX_LARGE_CLIENT_NUM} ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_busy_buffers_size       ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_temp_file_write_size    ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_param                   HTTPS on;
+        fastcgi_pass_header             "X-Accel-Redirect";
+        fastcgi_pass_header             "X-Accel-Expires";
     }
+
 EOF
 #
 vim /etc/nginx/php_fpmd
@@ -262,14 +243,23 @@ cat <<EOF > /etc/nginx/wp_permalink
 # WP-PERMALINK SSL Setting.
 #
     location @wp_permalink {
-        include                 /etc/nginx/fastcgi_params;
-        fastcgi_pass            unix:${BACKEND_LISTEN_SOCK};
-        fastcgi_index           index.php;
-        fastcgi_split_path_info ^(.+\.php)(.*)$;
-        fastcgi_param           SCRIPT_FILENAME ${APACHE_FILE_DIRECTORY}/index.php;
-        fastcgi_param           HTTPS on;
-        #fastcgi_pass_header     "X-Accel-Redirect";
-        #fastcgi_pass_header     "X-Accel-Expires";
+        include                         /etc/nginx/fastcgi_params;
+        fastcgi_pass                    unix:${BACKEND_LISTEN_SOCK};
+        fastcgi_index                   index.php;
+        fastcgi_split_path_info         ^(.+\.php)(.*)$;
+        fastcgi_param                   SCRIPT_FILENAME \$document_root\$index.php;
+        fastcgi_intercept_errors        on;
+        fastcgi_ignore_client_abort     off;
+        fastcgi_connect_timeout         60;
+        fastcgi_send_timeout            180;
+        fastcgi_read_timeout            180;
+        fastcgi_buffer_size             ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_buffers                 ${NGINX_LARGE_CLIENT_NUM} ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_busy_buffers_size       ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_temp_file_write_size    ${NGINX_PROXY_BUFFER_SIZE};
+        fastcgi_param                   HTTPS on;
+        fastcgi_pass_header             "X-Accel-Redirect";
+        fastcgi_pass_header             "X-Accel-Expires";
     }
 EOF
 #
@@ -334,8 +324,30 @@ server {
     # listen      [::]:443 ssl http2;
     server_name ${CONFIG_HOST_DOMAIN};
 
-    # SSL PARAM
-    include https_param;
+    ssl                          on;
+    ssl_certificate              ${FRONT_SSL_CERT};
+    ssl_certificate_key          ${FRONT_SSL_KEY};
+    ssl_dhparam                  ${FRONT_SSL_DH};
+
+    # HSTS
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+
+    ssl_prefer_server_ciphers    on;
+
+    ssl_session_cache shared:SSL:${FRONT_SSL_SESSION};
+    ssl_session_timeout          ${FRONT_SSL_SESSION};
+
+    ssl_protocols ${ALL_SSL_PROTOCOLS};
+    ssl_ciphers ${ALL_SSL_CIPHERS};
+
+    ssl_stapling                 on;
+    ssl_stapling_verify          on;
+    ssl_trusted_certificate      ${FRONT_SSLCA_CERT};
+    resolver                     ${SETUP_VPS_DNS_PRI_IP} ${SETUP_VPS_DNS_SEC_IP} valid=300s;
+
+    # TERTIARY DNS: ${SETUP_VPS_DNS_TER_IP}
+
+    resolver_timeout             10s;
 
     # HTTP/2.0
     # include h2_param;
@@ -460,6 +472,9 @@ vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
 # WordPress
 ############################################################################
 # WordPress
+## .user.ini Setup.
+sed -i '1a\session.save_path ="${NGINX_USER_SESSION_DIR}"' ${APACHE_FILE_DIRECTORY}/.user.ini
+vim ${APACHE_FILE_DIRECTORY}/.user.ini
 ## Install File Download.
 cd ${APACHE_FILE_DIRECTORY}
 curl -O ${WP_DL_URL}/${WP_DL_FILE}
@@ -557,7 +572,7 @@ cat <<EOF > /etc/nginx/php_fpmd
 #
     location ~ \.php(\$|/) {
         include                         /etc/nginx/fastcgi_params;
-        fastcgi_pass                    unix:/var/run/php-fpm/www.sock;
+        fastcgi_pass                    unix:${BACKEND_LISTEN_SOCK};
         fastcgi_index                   index.php;
         fastcgi_split_path_info         ^(.+\.php)(.*)$;
         fastcgi_param                   SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
@@ -573,8 +588,8 @@ cat <<EOF > /etc/nginx/php_fpmd
         # Community
         fastcgi_param PHP_VALUE         "allow_url_fopen=On";
         fastcgi_param                   HTTPS on;
-        #fastcgi_pass_header            "X-Accel-Redirect";
-        #fastcgi_pass_header            "X-Accel-Expires";
+        fastcgi_pass_header            "X-Accel-Redirect";
+        fastcgi_pass_header            "X-Accel-Expires";
     }
 EOF
 #
@@ -653,8 +668,30 @@ server {
     # listen      [::]:443 ssl http2;
     server_name ${CONFIG_HOST_DOMAIN};
 
-    # SSL PARAM
-    include https_param;
+    ssl                          on;
+    ssl_certificate              ${FRONT_SSL_CERT};
+    ssl_certificate_key          ${FRONT_SSL_KEY};
+    ssl_dhparam                  ${FRONT_SSL_DH};
+
+    # HSTS
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+
+    ssl_prefer_server_ciphers    on;
+
+    ssl_session_cache shared:SSL:${FRONT_SSL_SESSION};
+    ssl_session_timeout          ${FRONT_SSL_SESSION};
+
+    ssl_protocols ${ALL_SSL_PROTOCOLS};
+    ssl_ciphers ${ALL_SSL_CIPHERS};
+
+    ssl_stapling                 on;
+    ssl_stapling_verify          on;
+    ssl_trusted_certificate      ${FRONT_SSLCA_CERT};
+    resolver                     ${SETUP_VPS_DNS_PRI_IP} ${SETUP_VPS_DNS_SEC_IP} valid=300s;
+
+    # TERTIARY DNS: ${SETUP_VPS_DNS_TER_IP}
+
+    resolver_timeout             10s;
 
     # HTTP/2.0
     # include h2_param;
@@ -780,6 +817,10 @@ vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
 # concrete5
 ############################################################################
 # concrete5
+## .user.ini Setup.
+sed -i '1a\session.save_path ="${NGINX_USER_SESSION_DIR}"' ${APACHE_FILE_DIRECTORY}/.user.ini
+vim ${APACHE_FILE_DIRECTORY}/.user.ini
+## Install File Download.
 cd ${APACHE_FILE_DIRECTORY}
 wget ${C5_DL_URL}
 mv ${APACHE_FILE_DIRECTORY}/index.html ${APACHE_FILE_DIRECTORY}/${C5_VERSION}.zip

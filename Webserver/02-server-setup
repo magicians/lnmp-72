@@ -1,5 +1,5 @@
 #!/bin/bash
-#### lnmp-72 v1.0.6
+#### lnmp-72 v1.0.7
 ############################################################################
 source ./initfile
 source ./config_init.txt
@@ -194,6 +194,8 @@ sed -i 's|^Alias /images/apache_pb.gif /usr/share/httpd/noindex/images/apache_pb
 sed -i 's|^Alias /images/poweredby.png /usr/share/httpd/noindex/images/poweredby.png|#\0|' ${APACHE_CONFIG_DIRECTORY}/welcome.conf
 vim ${APACHE_CONFIG_DIRECTORY}/welcome.conf
 mkdir -p /var/www/{html,logs,error,icons,cgi-bin}
+mkdir ${NGINX_USER_SESSION_DIR}
+chmod 700 ${NGINX_USER_SESSION_DIR}
 touch /var/www/error/{401.html,403.html,404.html,500.html,index.html}
 echo "401 - Authorization Required." >> /var/www/error/401.html
 echo "403 - Forbidden." >> /var/www/error/403.html
@@ -201,6 +203,7 @@ echo "404 - Not Found." >> /var/www/error/404.html
 echo "500 - Internal Server Error." >> /var/www/error/50x.html
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/www/{html,logs,error,icons,cgi-bin}
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/session
+chown ${WEB_SERVER_SYSTEM_USER_GROUP} ${NGINX_USER_SESSION_DIR}
 #
 mv ${APACHE_CONFIG_DIRECTORY}/ssl.conf ${APACHE_CONFIG_DIRECTORY}/ssl_conf
 ######################################################################
