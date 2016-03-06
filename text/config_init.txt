@@ -47,5 +47,6 @@ GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
 # -- Nginx Config Directory.
 NGINX_BASE_DIRECTORY=/etc/nginx
 NGINX_CONFIG_DIRECTORY=/etc/nginx/conf.d
+NGINX_SOAP_CACHE_DIR=/var/www/wsdlcache
 #
 ###############################################################################

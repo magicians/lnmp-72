@@ -49,6 +49,10 @@ sed -i 's|^;listen.mode|listen.mode|g' /etc/php-fpm.d/www.conf
 sed -i 's|^pm = dynamic|pm = static|g' /etc/php-fpm.d/www.conf
 sed -i "s|^pm.max_children = 50|pm.max_children = ${PHP_FPM_MAX_CHILDREN}|g" /etc/php-fpm.d/www.conf
 sed -i "s|^;pm.max_requests = 500|pm.max_requests = ${PHP_FPM_MAX_REQUEST}|g" /etc/php-fpm.d/www.conf
+sed -i "s|php_value\[session.save_path\]|;\0|g" /etc/php-fpm.d/www.conf
+sed -i "s|php_value\[soap.wsdl_cache_dir\]|;\0|g" /etc/php-fpm.d/www.conf
+sed -i "420a\php_value[session.save_path]    = ${NGINX_USER_SESSION_DIR}" /etc/php-fpm.d/www.conf
+sed -i "421a\php_value[soap.wsdl_cache_dir]    = ${NGINX_SOAP_CACHE_DIR}" /etc/php-fpm.d/www.conf
 vim /etc/php-fpm.d/www.conf
 # PHP.ini Edit
 #
@@ -65,6 +69,7 @@ sed -i "s|^session.hash_function = 0|session.hash_function = 1|g" /etc/php.ini
 sed -i "s|^;session.entropy_file = /dev/urandom|session.entropy_file = /dev/urandom|g" /etc/php.ini
 sed -i "s|^;session.entropy_length = 32|session.entropy_length = 32|g" /etc/php.ini
 sed -i "s|^;date.timezone =|date.timezone = \"${PHP_DATE_TIMEZONE}\"|g" /etc/php.ini
+sed -i "s|^session.save_path = \"/tmp\"$|;\0|g" /etc/php.ini
 sed -i "s|^;session.cookie_secure =|session.cookie_secure = ${PHP_SESSION_COOKIE}|g" /etc/php.ini
 sed -i "s|^session.cookie_domain =|;\0|g" /etc/php.ini
 sed -i "s|^;mbstring.language = Japanese|mbstring.language = Japanese|g" /etc/php.ini
@@ -73,6 +78,7 @@ sed -i "s|^;mbstring.encoding_translation = Off|mbstring.encoding_translation = 
 sed -i "s|^;mbstring.http_input =|mbstring.http_input = pass|g" /etc/php.ini
 sed -i "s|^;mbstring.http_output =|mbstring.http_output = pass|g" /etc/php.ini
 sed -i "s|^;mbstring.detect_order = auto|mbstring.detect_order = auto|g" /etc/php.ini
+sed -i "s|^soap.wsdl_cache_dir=\"/tmp\"$|;\0|g" /etc/php.ini
 vim /etc/php.ini
 ####
 clear
@@ -195,7 +201,9 @@ sed -i 's|^Alias /images/poweredby.png /usr/share/httpd/noindex/images/poweredby
 vim ${APACHE_CONFIG_DIRECTORY}/welcome.conf
 mkdir -p /var/www/{html,logs,error,icons,cgi-bin}
 mkdir ${NGINX_USER_SESSION_DIR}
+mkdir ${NGINX_SOAP_CACHE_DIR}
 chmod 700 ${NGINX_USER_SESSION_DIR}
+chmod 700 ${NGINX_SOAP_CACHE_DIR}
 touch /var/www/error/{401.html,403.html,404.html,500.html,index.html}
 echo "401 - Authorization Required." >> /var/www/error/401.html
 echo "403 - Forbidden." >> /var/www/error/403.html
@@ -204,6 +212,7 @@ echo "500 - Internal Server Error." >> /var/www/error/50x.html
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/www/{html,logs,error,icons,cgi-bin}
 chown -R ${WEB_SERVER_SYSTEM_USER_GROUP}:${WEB_SERVER_SYSTEM_USER_GROUP} /var/lib/php/session
 chown ${WEB_SERVER_SYSTEM_USER_GROUP} ${NGINX_USER_SESSION_DIR}
+chown ${WEB_SERVER_SYSTEM_USER_GROUP} ${NGINX_SOAP_CACHE_DIR}
 #
 mv ${APACHE_CONFIG_DIRECTORY}/ssl.conf ${APACHE_CONFIG_DIRECTORY}/ssl_conf
 ######################################################################

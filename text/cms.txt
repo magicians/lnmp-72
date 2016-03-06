@@ -41,6 +41,7 @@ NGINX_BACKEND_COOKIE=comment_author\|wordpress_\[a-f0-9\]\+\|wp-postpass\|wordpr
 #
 # -- Nginx Referers URI
 NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ wordpress\.com
+#NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ *\.concrete5\.org\ *\.concrete5-japan\.org
 #
 # -- Nginx Deny File and Dir.
 NGINX_DENY_ALL_DIR=ht\|git\|svn\|user\.ini\|php\.ini

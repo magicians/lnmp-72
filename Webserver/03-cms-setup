@@ -247,7 +247,7 @@ cat <<EOF > /etc/nginx/wp_permalink
         fastcgi_pass                    unix:${BACKEND_LISTEN_SOCK};
         fastcgi_index                   index.php;
         fastcgi_split_path_info         ^(.+\.php)(.*)$;
-        fastcgi_param                   SCRIPT_FILENAME \$document_root\$index.php;
+        fastcgi_param                   SCRIPT_FILENAME ${APACHE_FILE_DIRECTORY}/index.php;
         fastcgi_intercept_errors        on;
         fastcgi_ignore_client_abort     off;
         fastcgi_connect_timeout         60;
@@ -473,7 +473,9 @@ vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
 ############################################################################
 # WordPress
 ## .user.ini Setup.
-sed -i '1a\session.save_path ="${NGINX_USER_SESSION_DIR}"' ${APACHE_FILE_DIRECTORY}/.user.ini
+touch ${APACHE_FILE_DIRECTORY}/.user.ini
+sed -i '1a\session.save_path="${NGINX_USER_SESSION_DIR}"' ${APACHE_FILE_DIRECTORY}/.user.ini
+sed -i '2a\soap.wsdl_cache_dir="${NGINX_SOAP_CACHE_DIR}"' ${APACHE_FILE_DIRECTORY}/.user.ini
 vim ${APACHE_FILE_DIRECTORY}/.user.ini
 ## Install File Download.
 cd ${APACHE_FILE_DIRECTORY}
@@ -818,7 +820,9 @@ vim ${NGINX_CONFIG_DIRECTORY}/10-${CONFIG_HOST_DOMAIN}.conf
 ############################################################################
 # concrete5
 ## .user.ini Setup.
-sed -i '1a\session.save_path ="${NGINX_USER_SESSION_DIR}"' ${APACHE_FILE_DIRECTORY}/.user.ini
+touch ${APACHE_FILE_DIRECTORY}/.user.ini
+sed -i '1a\session.save_path="${NGINX_USER_SESSION_DIR}"' ${APACHE_FILE_DIRECTORY}/.user.ini
+sed -i '2a\soap.wsdl_cache_dir="${NGINX_SOAP_CACHE_DIR}"' ${APACHE_FILE_DIRECTORY}/.user.ini
 vim ${APACHE_FILE_DIRECTORY}/.user.ini
 ## Install File Download.
 cd ${APACHE_FILE_DIRECTORY}
