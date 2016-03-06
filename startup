@@ -3,7 +3,6 @@
 source ./initfile
 ####
 chmod 600 ${INSTALL_PATH}/initfile
-chmod 600 ${INSTALL_PATH}/text/*.txt
 ##############################################
 ln -s ${INSTALL_PATH}/text/nginx-build.txt ${INSTALL_PATH}/nginx-build.txt
 ln -s ${INSTALL_PATH}/text/base.txt ${INSTALL_PATH}/base.txt
@@ -11,6 +10,7 @@ ln -s ${INSTALL_PATH}/text/server.txt ${INSTALL_PATH}/server.txt
 ln -s ${INSTALL_PATH}/text/data.txt ${INSTALL_PATH}/data.txt
 ln -s ${INSTALL_PATH}/text/deny_spam.txt ${INSTALL_PATH}/deny_spam.txt
 chmod 400 ${INSTALL_PATH}/last_optimization
+chmod 600 ${INSTALL_PATH}/text/*.txt
 ##############################################
 #echo -e "LAMP(Linux, Apache, MariaDB, PHP)でインストールしますか？ [y]"
 echo -e "Jp: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)？ [y]"
