@@ -2,7 +2,7 @@
 #### lnmp-72 v1.0.6
 ############################################################################
 source ./initfile
-source ./default.txt
+source ./base.txt
 ############################################################################
 # totem on Malware Infection. / uninstall.
 yum remove -y totem*
