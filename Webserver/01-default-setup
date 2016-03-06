@@ -616,7 +616,7 @@ sed -i "s|^#UpdateLogFile /var/log/freshclam.log$|UpdateLogFile /var/log/freshcl
 sed -i "s|^DatabaseOwner clamupdate$|#\0|g" /etc/freshclam.conf
 sed -i "s|^DatabaseMirror database.clamav.net$|#\0|g" /etc/freshclam.conf
 sed -i "56a\DatabaseOwner root" /etc/freshclam.conf
-sed -i "79a\DatabaseMirror db.jp.clamav.net" /etc/freshclam.conf
+sed -i "80a\DatabaseMirror db.jp.clamav.net" /etc/freshclam.conf
 sed -i "s|^FRESHCLAM_DELAY=disabled-warn|#\0|g" /etc/sysconfig/freshclam
 vim /etc/freshclam.conf
 vim /etc/sysconfig/freshclam
