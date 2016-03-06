@@ -2,6 +2,7 @@
 #### lnmp-72 v1.0.6
 ############################################################################
 source ./initfile
+source ./config_init.txt
 source ./base.txt
 ############################################################################
 # totem on Malware Infection. / uninstall.
@@ -419,9 +420,9 @@ yum -y install denyhosts
 echo -e "Sakura Simple Monitoring Setup? [ y/n ]"
 read set_sakurasms
 if [ ${set_sakurasms} = "y" ] ; then
-echo "${GLOBAL_IP_ADDR}" >> ${DENYHOSTS_ALLOWED_PATH}
-echo "${MONITORING_SERVER_IPADDR}" >> ${DENYHOSTS_ALLOWED_PATH}
-vim ${DENYHOSTS_ALLOWED_PATH}
+echo "${GLOBAL_IP_ADDR}" >> /var/lib/denyhosts/allowed-hosts
+echo "${MONITORING_SERVER_IPADDR}" >> /var/lib/denyhosts/allowed-hosts
+vim /var/lib/denyhosts/allowed-hosts
 fi
 systemctl enable denyhosts
 systemctl start denyhosts

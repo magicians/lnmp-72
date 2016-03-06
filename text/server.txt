@@ -1,6 +1,6 @@
 #### lnmp-72 v1.0.6
 ###############################################################################
-## 2.WebServer Environment Variable. / Backend --
+## 4. WebServer Environment Variable.
 ###############################################################################
 ## -- 2-1. HostName Setup Config.
 # -- HOST DOMAIN
@@ -16,7 +16,7 @@ PHP_FPM_MAX_CHILDREN=10
 PHP_FPM_MAX_REQUEST=500
 #
 ###############################################################################
-## 2-2. SSL Setup Config. / SSL --
+## 5. SSL Setup Config.
 ###############################################################################
 # -- SSL Cert Path.
 #FRONT_SSL_CERT=/etc/pki/tls/cert/localhost.crt
@@ -63,15 +63,10 @@ ALL_SSL_CIPHERS=HIGH:!aNULL:!MD5
 #
 ####
 ###############################################################################
-## 2-3. WebServer Setup Config. / WebServer Directory --
+## 6. WebServer Directory.
 ###############################################################################
 # -- Web Server User and Group.
 WEB_SERVER_SYSTEM_USER_GROUP=nginx
-#
-# -- Apache Config Directory.
-APACHE_BASE_CONFIG_DIRECTORY=/etc/httpd/conf
-APACHE_MOD_CONFIG_DIRECTORY=/etc/httpd/conf.modules.d
-APACHE_CONFIG_DIRECTORY=/etc/httpd/conf.d
 #
 # -- Apache Web Directory.
 APACHE_LOG_DIRECTORY=/var/www/logs
@@ -82,7 +77,7 @@ APACHE_ERROR_DIRECTORY=/var/www/error
 APACHE_MOD_EXTRACT_FORWARDED=git://github.com/matsumoto-r/mod_extract_forwarded_for_2.4
 #
 ###############################################################################
-## 2-4. LAMP and LNMP / PHP.init Setup Config. / PHP --
+## 7. PHP.init Setup Config.
 ###############################################################################
 # -- PHP.ini Edit.
 # -- Memory Limit.
@@ -99,16 +94,7 @@ PHP_DATE_TIMEZONE=Asia/Tokyo
 PHP_SESSION_COOKIE=On
 #
 ###############################################################################
-## 2-5. LNMP / GeoIP Setup Config. / GeoIP --
-###############################################################################
-# -- GeoIP Path.
-GEOIP_COUNTRY=JP
-GEOIP_PATH=/usr/share/GeoIP
-GEOIP_FILE=GeoIP.dat
-GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
-#
-###############################################################################
-## 2-6-1. LNMP / Nginx Setup Config. / Nginx --
+## 8. Nginx and MariaDB Setup Config.
 ###############################################################################
 # -- Nginx Worker Process xx
 #NGINX_WORKER_PROCESSES=1

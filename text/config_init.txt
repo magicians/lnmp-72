@@ -1,0 +1,50 @@
+###############################################################################
+## Repository Keys. / GPG --
+###############################################################################
+# -- rpmforge GPG Key.
+RepoRPMForgeGPG=http://apt.sw.be/RPM-GPG-KEY.dag.txt
+# -- eple GPG Key.
+RepoEpelGPG=http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+# -- elrepo GPG Key.
+RepoElrepoGPG=http://elrepo.org/RPM-GPG-KEY-elrepo.org
+# -- remi GPG key.
+RepoRemiGPG=http://rpms.famillecollet.com/RPM-GPG-KEY-remi
+#
+###############################################################################
+## Repository. / RPM --
+###############################################################################
+# -- rpmforge.repo
+RepoRPMForgex86=http://apt.sw.be/redhat/el7/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el7.rf.x86_64.rpm
+# -- epel.repo
+RepoEPELx86=http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+# -- elrepo.repo
+RepoElrepox86=http://elrepo.org/linux/elrepo/el7/x86_64/RPMS/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+# -- remi.repo
+RepoRemix86=http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+#
+###############################################################################
+## WebServer Setup Config.
+###############################################################################
+# -- Apache Config Directory.
+APACHE_BASE_CONFIG_DIRECTORY=/etc/httpd/conf
+APACHE_MOD_CONFIG_DIRECTORY=/etc/httpd/conf.modules.d
+APACHE_CONFIG_DIRECTORY=/etc/httpd/conf.d
+#
+###############################################################################
+## GeoIP Setup Config.
+###############################################################################
+# -- GeoIP Path.
+GEOIP_COUNTRY=JP
+GEOIP_PATH=/usr/share/GeoIP
+GEOIP_FILE=GeoIP.dat
+GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
+#
+###############################################################################
+## Nginx Setup Config.
+###############################################################################
+#
+# -- Nginx Config Directory.
+NGINX_BASE_DIRECTORY=/etc/nginx
+NGINX_CONFIG_DIRECTORY=/etc/nginx/conf.d
+#
+###############################################################################

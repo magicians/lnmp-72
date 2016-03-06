@@ -1,14 +1,10 @@
 #### lnmp-72 v1.0.6
 ###############################################################################
-## 2-6-2. LNMP / Nginx Setup Config. / Nginx --
+## 10. Nginx Setup Config.
 ###############################################################################
 # -- UPSTREAM KEEPALIVE
 NGINX_KEEPALIVE_TIMEOUT=5
 NGINX_KEEPALIVE_UPSTREAM=10
-#
-# -- Nginx Config Directory.
-NGINX_BASE_DIRECTORY=/etc/nginx
-NGINX_CONFIG_DIRECTORY=/etc/nginx/conf.d
 #
 # -- Nginx Default Setting.
 NGINX_INDEX_FILE_LIST=index\.php\ index\.html\ index\.htm
@@ -59,7 +55,7 @@ NGINX_EXPIRES_DAY=7d
 NGINX_LOG_NOT_FOUND=off
 #
 ###############################################################################
-## 2-7. MariaDB Setup Config. / DB --
+## 11. MariaDB Setup Config.
 ###############################################################################
 #
 # -- Database root Passwd.
@@ -75,7 +71,7 @@ CREATE_DB_NAME=
 DB_USER_NAME=
 #
 ###############################################################################
-## 3. OPTION - WordPress Install. / WP --
+## 12-1. OPTION - WordPress Install.
 ###############################################################################
 # -- Install Host
 WP_SCHEMA=${NGINX_SCHEMA}
@@ -93,7 +89,7 @@ WP_DB_UNIX_PATH=localhost:/var/lib/mysql/mysql.sock
 # -- WP DB PREFIX
 WP_DB_PREFIX=wp_
 ###############################################################################
-## 3. OPTION - concrete5 Install. / c5 --
+## 12-2. OPTION - concrete5 Install.
 ###############################################################################
 # -- Install Host
 C5_SCHEMA=${NGINX_SCHEMA}

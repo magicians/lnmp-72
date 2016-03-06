@@ -7,10 +7,12 @@ chmod 600 ${INSTALL_PATH}/initfile
 ln -s ${INSTALL_PATH}/text/nginx-build.txt ${INSTALL_PATH}/nginx-build.txt
 ln -s ${INSTALL_PATH}/text/base.txt ${INSTALL_PATH}/base.txt
 ln -s ${INSTALL_PATH}/text/server.txt ${INSTALL_PATH}/server.txt
-ln -s ${INSTALL_PATH}/text/data.txt ${INSTALL_PATH}/data.txt
+ln -s ${INSTALL_PATH}/text/cms.txt ${INSTALL_PATH}/cms.txt
 ln -s ${INSTALL_PATH}/text/deny_spam.txt ${INSTALL_PATH}/deny_spam.txt
-chmod 400 ${INSTALL_PATH}/last_optimization
+ln -s ${INSTALL_PATH}/text/config_init.txt ${INSTALL_PATH}/config_init.txt
+##############################################
 chmod 600 ${INSTALL_PATH}/text/*.txt
+chmod 400 ${INSTALL_PATH}/last_optimization
 ##############################################
 #echo -e "LAMP(Linux, Apache, MariaDB, PHP)でインストールしますか？ [y]"
 echo -e "Jp: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)？ [y]"

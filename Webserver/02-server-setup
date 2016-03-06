@@ -2,6 +2,7 @@
 #### lnmp-72 v1.0.6
 ############################################################################
 source ./initfile
+source ./config_init.txt
 source ./base.txt
 source ./server.txt
 source ./deny_spam.txt
