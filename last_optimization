@@ -7,7 +7,9 @@ source ./initfile
 rm -f ${INSTALL_PATH}/*.sh
 rm -f ${INSTALL_PATH}/{*.txt,*.md,.gitignore,startup}
 rm -fr ${INSTALL_PATH}/{ReverseProxy,text,.git}
-
+####
+yum clean all
+####
 cat <<EOF > /home/${USER_NAME}/check.sh
 #!/bin/bash
 sh /etc/cron.daily/clamscan
