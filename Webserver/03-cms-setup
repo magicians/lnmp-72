@@ -785,7 +785,7 @@ server {
     #}
 
     # concrete5 Config Files Access Setup
-    location ~ /(config/|database.php) {
+    location ~ /(config(/\.*)|database.php) {
         allow   127.0.0.1;
         allow   ${SERVER_STATIC_IP_ADDR};
         deny    all;

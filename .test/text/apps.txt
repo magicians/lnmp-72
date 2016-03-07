@@ -1,0 +1,42 @@
+#### lnmp-72 v1.0.7
+###############################################################################
+# 9. Nginx Default Setting.
+###############################################################################
+# -- Nginx Index Files.
+NGINX_INDEX_FILE_LIST=index\.php\ index\.html\ index\.htm
+#
+# -- Nginx Header Setup.
+NGINX_HEADER_X_FRAME_OPT=DENY
+NGINX_HEADER_X_CONTENT_TYPE_OPT=nosniff
+NGINX_HEADER_X_XSS_PROTECT=1\;\ mode=block
+NGINX_HEADER_CONTENT_SP=default-src\ \'self\'\;\ script-src\ \'self\'\ \'unsafe-inline\'\ \'unsafe-eval\'\ https\:\/\/ssl\.google-analytics\.com\;\ img-src\ \'self\'\ https\:\/\/ssl\.google-analytics\.com\;\ style-src\ \'self\'\ \'unsafe-inline\'\ https\:\/\/fonts\.googleapis\.com\ \'self\'\ https\:\/\/themes\.googleusercontent\.com\;\ frame-src\ \'none\'\ object-src\ \'none\'
+#
+# -- Nginx Client Buffer Setup.
+NGINX_CLIENT_BODY=8k
+NGINX_CLIENT_HEAD=1k
+NGINX_CLIENT_MAXBODY=1m
+NGINX_LARGE_CLIENT_NUM=8
+NGINX_LARGE_CLIENT_HEAD=8k
+#
+# -- Nginx PHP-FPM Buffer Setup.
+NGINX_PROXY_BUFFER_SIZE=16k
+#
+# -- Nginx Deny File and Dir.
+NGINX_DENY_ALL_DIR=ht\|git\|svn\|user\.ini\|php\.ini
+#
+# -- Nginx Cache File Setting.
+NGINX_LOCATION_ASCII_FILE=txt\|xml\|html\?\|js\|css\|gz
+NGINX_LOCATION_BINARY_FILE=ico\|jpe\?g\|gif\|png\|wmv\|flv\|mpg
+#
+# -- Nginx Location Logging.
+NGINX_LOCATION_LOG=off
+NGINX_EXPIRES_DAY=7d
+NGINX_LOG_NOT_FOUND=off
+#
+###############################################################################
+## 10. MariaDB Setup Config.
+###############################################################################
+# -- Database root Passwd.
+DB_ROOT_PASSWD=
+#
+###############################################################################

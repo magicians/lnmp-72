@@ -7,7 +7,7 @@ source ./initfile
 ####
 rm -f ${INSTALL_PATH}/*.sh
 rm -f ${INSTALL_PATH}/{*.txt,*.md,.gitignore,startup}
-rm -fr ${INSTALL_PATH}/{ReverseProxy,text,.git}
+rm -fr ${INSTALL_PATH}/{Webserver,text,.git,.test}
 ####
 yum clean all
 ####

@@ -1,0 +1,92 @@
+#### lnmp-72 v1.0.7
+###############################################################################
+## concrete5 SSL Setup Config.
+###############################################################################
+# -- PHP-FPM CONF PREFIX
+CMS_CONFIG_PREFIX=c5
+#
+# -- HOST DOMAIN
+CONFIG_CMS_DOMAIN=www.example.com
+#
+# -- SSL Cert Path.
+FRONT_SSL_CERT=
+#
+# -- SSL Key Path.
+FRONT_SSL_KEY=
+#
+# -- SSL CA Cert Path.
+FRONT_SSLCA_CERT=
+#
+# -- SSL DH Param Path.
+FRONT_SSL_DH=/etc/nginx/${CMS_CONFIG_PREFIX}_dhparam.pem
+#
+# -- SSL SESSION TIME
+FRONT_SSL_SESSION=5m
+#
+# -- ssl protocols.
+ALL_SSL_PROTOCOLS=TLSv1\.2\ TLSv1\.1\ TLSv1
+#
+## -- ssl ciphers.
+#### -- Default Security Start. --
+ALL_SSL_CIPHERS=HIGH:!aNULL:!MD5
+#### -- Default Security End. --
+#
+#### -- CRYPTREC/IPA Guide High Security / Not Safari Start.--
+#ALL_SSL_CIPHERS=ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256
+#### -- CRYPTREC/IPA Guide High Security / Not Safari End. --
+#
+#### -- CRYPTREC/IPA Guide Normal Security Start. --
+#ALL_SSL_CIPHERS=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-CAMELLIA128-SHA:DHE-RSA-AES128-SHA:AES128-GCM-SHA256:AES128-SHA256:CAMELLIA128-SHA:AES128-SHA:ECDH-ECDSA-AES128-GCM-SHA256:ECDH-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-SHA256:DHE-RSA-CAMELLIA256-SHA:DHE-RSA-AES256-SHA:AES256-GCM-SHA384:AES256-SHA256:CAMELLIA256-SHA:AES256-SHA:ECDH-ECDSA-AES256-GCM-SHA384:ECDH-RSA-AES256-GCM-SHA384
+#### -- CRYPTREC/IPA Guide Normal Security End. --
+#
+#### -- Mozilla Intermediate Compatibility Profile Middle Security Start. --
+#ALL_SSL_CIPHERS=ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA
+#### Mozilla Intermediate Compatibility Profile Middle Security End. --
+#
+#### -- Mozilla Intermediate Compatibility Profile High Security Start. --
+#ALL_SSL_CIPHERS=ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK
+#### -- Mozilla Intermediate Compatibility Profile High Security End. --
+#
+###############################################################################
+## concrete5 .user.ini Setup Config.
+###############################################################################
+# -- PHP .user.ini Edit.
+# -- Memory Limit.
+PHP_MEM_LIMIT=256M
+#
+# -- Post Max File Size.
+PHP_POST_MAX=128M
+#
+# -- Upload Max File Size.
+PHP_UPLOAD_MAX=64M
+#
+# -- session.cookie_secure for SSL
+PHP_SESSION_COOKIE=On
+#
+# -- Nginx User PHP Session Dir.
+NGINX_USER_SESSION_DIR=/var/www/${CMS_CONFIG_PREFIX}
+#
+###############################################################################
+## concrete5 Nginx Setup Config.
+###############################################################################
+#
+## -- PHP-FPM UNIX SOCKET
+BACKEND_LISTEN_WWW_SOCK=/var/run/php-fpm/${CMS_CONFIG_PREFIX}.sock
+##
+# -- Nginx Backend URI / concrete5
+NGINX_BACKEND_DIRECTORY=dashboard\(/\\\.\*\)\|login\(/\\\.\*\)\|authenticate\(/\\\.\*\)\|install\(/\\\.\*\)
+NGINX_BACKEND_COOKIE=CONCRETE5\|CONCRETE5_INSTALL_TEST\|dashboardPanelStatus
+#
+# -- Nginx Referers URI
+NGINX_REFERERS_URI=*\.google\.com\ *\.facebook\.com\ *\.twitter\.com\ *\.concrete5\.org\ *\.concrete5-japan\.org
+#
+###############################################################################
+## concrete5 Install.
+###############################################################################
+# -- concrete5 Version
+C5_VERSION=concrete5.7.5.6
+#
+# -- concrete5 Download URL
+C5_DL_URL=http://www.concrete5.org/download_file/-/view/85780/
+#
+###############################################################################

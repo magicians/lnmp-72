@@ -5,7 +5,11 @@ source ./initfile
 ####
 chmod 600 ${INSTALL_PATH}/initfile
 ##############################################
-ln -s ${INSTALL_PATH}/text/nginx-build.txt ${INSTALL_PATH}/nginx-build.txt
+echo -e "Jp: 本番用サーバセットアップ [y] / テストサーバセットアップ [n]"
+echo -e "En: Production Server Setup. [y] / Test Server Setup. [n]"
+read set_seversetup
+if [ ${set_seversetup} = "y" ] ; then
+##############################################
 ln -s ${INSTALL_PATH}/text/base.txt ${INSTALL_PATH}/base.txt
 ln -s ${INSTALL_PATH}/text/server.txt ${INSTALL_PATH}/server.txt
 ln -s ${INSTALL_PATH}/text/cms.txt ${INSTALL_PATH}/cms.txt
@@ -13,20 +17,42 @@ ln -s ${INSTALL_PATH}/text/deny_spam.txt ${INSTALL_PATH}/deny_spam.txt
 ln -s ${INSTALL_PATH}/text/config_init.txt ${INSTALL_PATH}/config_init.txt
 ##############################################
 chmod 600 ${INSTALL_PATH}/text/*.txt
-chmod 400 ${INSTALL_PATH}/last_optimization
 ##############################################
-#echo -e "LAMP(Linux, Apache, MariaDB, PHP)でインストールしますか？ [y]"
-echo -e "Jp: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)？ [y]"
-echo -e "En: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)? [y]"
-read instaltolamp
+echo -e "Jp: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)"
+echo -e "En: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)"
 ##############################################
-if [ ${instaltolamp} = "y" ] ; then
-### LAMP Mode Install Start.
-### Nginx+Apache Mode Install Start.
+### LNMP PRODUCTION Mode Install Start.
 ##############################################
 ln -s ${INSTALL_PATH}/Webserver/01-default-setup ${INSTALL_PATH}/01.DEFAULT-SETUP.sh
 ln -s ${INSTALL_PATH}/Webserver/02-server-setup ${INSTALL_PATH}/O2.WEBSERVER-SETUP.sh
 ln -s ${INSTALL_PATH}/Webserver/03-cms-setup ${INSTALL_PATH}/03.DB-SETUP.sh
-chmod -R +x ${INSTALL_PATH}/*.sh
+##############################################
+else
+##############################################
+ln -s ${INSTALL_PATH}/.test/text/base.txt ${INSTALL_PATH}/base.txt
+ln -s ${INSTALL_PATH}/.test/text/server.txt ${INSTALL_PATH}/server.txt
+ln -s ${INSTALL_PATH}/.test/text/apps.txt ${INSTALL_PATH}/apps.txt
+ln -s ${INSTALL_PATH}/.test/text/config_init.txt ${INSTALL_PATH}/config_init.txt
+ln -s ${INSTALL_PATH}/.test/text/_wp.txt ${INSTALL_PATH}/_wp.txt
+ln -s ${INSTALL_PATH}/.test/text/_c5.txt ${INSTALL_PATH}/_c5.txt
+##############################################
+chmod 600 ${INSTALL_PATH}/.test/text/*.txt
+##############################################
+echo -e "Jp: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)"
+echo -e "En: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)"
+##############################################
+### LNMP TEST Mode Install Start.
+##############################################
+ln -s ${INSTALL_PATH}/.test/base_server.sh ${INSTALL_PATH}/01.DEFAULT-SETUP.sh
+ln -s ${INSTALL_PATH}/.test/web_server.sh ${INSTALL_PATH}/O2.WEBSERVER-SETUP.sh
+ln -s ${INSTALL_PATH}/.test/app_server.sh ${INSTALL_PATH}/03.DB-SETUP.sh
+ln -s ${INSTALL_PATH}/.test/_wordpress.sh ${INSTALL_PATH}/_wordpress.sh
+ln -s ${INSTALL_PATH}/.test/_concrete5.sh ${INSTALL_PATH}/_concrete5.sh
 ##############################################
 fi
+##############################################
+chmod -R +x ${INSTALL_PATH}/*.sh
+chmod 600 ${INSTALL_PATH}/nginx.txt
+chmod 400 ${INSTALL_PATH}/last_optimization
+ls -la
+##############################################

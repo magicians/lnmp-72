@@ -1,0 +1,58 @@
+#### lnmp-72 v1.0.7
+###############################################################################
+# -- 2. Base Environment Variable.
+###############################################################################
+# -- Domain Name. --
+# -- WebServer
+SETUP_WEBSERVER_HOSTNAME=localhost.localdomain
+#
+# -- PRIMARY DNS
+SETUP_VPS_DNS_PRI_IP=
+#
+# -- SECONDARY DNS
+SETUP_VPS_DNS_SEC_IP=
+#
+# -- TERTIARY DNS
+SETUP_VPS_DNS_TER_IP=
+#
+# -- Local Access IP. / Local Access Network Only. --
+LOCAL_IP_ADDR=192.168.1.0/24
+#
+# -- Global / Local Access IP. or Static IP. --
+#GLOBAL_IP_ADDR=192.168.1.
+GLOBAL_IP_ADDR=
+#
+# -- Server Static IP. --
+SERVER_STATIC_IP_ADDR=
+#
+# -- Sakura Simple Monitoring
+MONITORING_SERVER_IPADDR=61.211.224.144/28
+#
+# -- ssh Default Port Number.
+SSH_EDIT_PORT=22
+#
+# -- hashlimit-burst Default 10Packet / 2min.
+HASH_LIMIT_PACKET=10
+#
+# -- ssh hashlimit time(ms). / 120000ms = 2min.
+HASH_LIMIT_TIME=120000
+#
+# -- Default Language
+SERVER_DEFAULT_LANG=ja_JP.UTF-8
+#
+# -- Default Charset
+SERVER_DEFAULT_CHARSET=UTF-8
+#
+# -- logwatch mail.
+ALIASES_ROOT_MAIL_ADDR=
+#
+###############################################################################
+## 3. tripwire pass. / Tripwire Passwd --
+###############################################################################
+# -- Tripwire Site Password.
+INITSITEPASS=
+#
+# -- Tripwire Local Password.
+INITLOCALPASS=
+#
+###############################################################################

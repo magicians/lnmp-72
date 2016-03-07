@@ -1,0 +1,78 @@
+#### lnmp-72 v1.0.7
+###############################################################################
+## Repository Keys. / GPG --
+###############################################################################
+# -- rpmforge GPG Key.
+RepoRPMForgeGPG=http://apt.sw.be/RPM-GPG-KEY.dag.txt
+# -- eple GPG Key.
+RepoEpelGPG=http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+# -- elrepo GPG Key.
+RepoElrepoGPG=http://elrepo.org/RPM-GPG-KEY-elrepo.org
+# -- remi GPG key.
+RepoRemiGPG=http://rpms.famillecollet.com/RPM-GPG-KEY-remi
+#
+###############################################################################
+## Repository. / RPM --
+###############################################################################
+# -- rpmforge.repo
+RepoRPMForgex86=http://apt.sw.be/redhat/el7/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el7.rf.x86_64.rpm
+# -- epel.repo
+RepoEPELx86=http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+# -- elrepo.repo
+RepoElrepox86=http://elrepo.org/linux/elrepo/el7/x86_64/RPMS/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+# -- remi.repo
+RepoRemix86=http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+#
+###############################################################################
+## WebServer Setup Config.
+###############################################################################
+# -- HOST DOMAIN
+CONFIG_HOST_DOMAIN=${SETUP_WEBSERVER_HOSTNAME}
+#
+# -- Web Server User and Group.
+WEB_SERVER_SYSTEM_USER_GROUP=nginx
+#
+# -- Apache Config Directory.
+APACHE_BASE_CONFIG_DIRECTORY=/etc/httpd/conf
+APACHE_MOD_CONFIG_DIRECTORY=/etc/httpd/conf.modules.d
+APACHE_CONFIG_DIRECTORY=/etc/httpd/conf.d
+#
+# -- Apache Web Directory.
+APACHE_LOG_DIRECTORY=/var/www/logs
+APACHE_FILE_DIRECTORY=/var/www/html
+APACHE_ERROR_DIRECTORY=/var/www/error
+#
+###############################################################################
+## GeoIP Setup Config.
+###############################################################################
+# -- GeoIP Path.
+GEOIP_COUNTRY=JP
+GEOIP_PATH=/usr/share/GeoIP
+GEOIP_FILE=GeoIP.dat
+GEOIP_URL=http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry
+#
+###############################################################################
+## Nginx Setup Config.
+###############################################################################
+#
+# -- Nginx Config Directory.
+NGINX_BASE_DIRECTORY=/etc/nginx
+NGINX_CONFIG_DIRECTORY=/etc/nginx/conf.d
+NGINX_DEFAULT_CHARSET=utf-8
+#
+## -- Nginx Cache Reload Time
+NGINX_BACKEND_CACHE_RELOAD=86400
+#
+###############################################################################
+## PHP-FPM Setup Config.
+###############################################################################
+#
+PHP_FPM_SOAP_CACHE_DIR=/var/www/wsdlcache
+#
+###############################################################################
+## MariaDB Setup Config.
+###############################################################################
+#
+MARIADB_CONF_DIR=/etc/my.cnf
+#
+###############################################################################

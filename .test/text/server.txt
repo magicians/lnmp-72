@@ -1,0 +1,61 @@
+#### lnmp-72 v1.0.7
+###############################################################################
+## 4. WebServer Environment Variable.
+###############################################################################
+## -- 2-1. HostName Setup Config.
+#
+## -- PHP-FPM UNIX SOCKET
+BACKEND_LISTEN_SOCK=/var/run/php-fpm/www.sock
+#
+## -- PHP-FPM max_children
+PHP_FPM_MAX_CHILDREN=10
+#
+## -- PHP-FPM max_requests
+PHP_FPM_MAX_REQUEST=500
+#
+###############################################################################
+## 5. mod extract forwarded.
+###############################################################################
+# -- mod extract forwarded for Apache2.4
+APACHE_MOD_EXTRACT_FORWARDED=git://github.com/matsumoto-r/mod_extract_forwarded_for_2.4
+#
+###############################################################################
+## 6. PHP.ini Setup Config.
+###############################################################################
+# -- PHP.ini Edit.
+# -- Date Time Zone 
+PHP_DATE_TIMEZONE=Asia/Tokyo
+#
+###############################################################################
+## 7. Nginx and MariaDB Setup Config.
+###############################################################################
+# -- Nginx Worker Process xx
+#NGINX_WORKER_PROCESSES=1
+NGINX_WORKER_PROCESSES=auto
+# -- Nginx worker_cpu_affinity auto / ver.1.9.10 ~ | 010 010 / ~ ver.1.9.9
+#NGINX_WORKER_CPU_AFFINITY=010\ 010
+NGINX_WORKER_CPU_AFFINITY=auto
+# -- worker_priority -20 ~ 19
+NGINX_WORKER_PRIORITY=0
+#
+# -- MariaDB Edit.
+DB_BUFFER_POOL_SIZE=128M
+DB_LOG_FILE_SIZE=32M
+DB_STORAGE_ENGINE=InnoDB
+#
+###############################################################################
+## 8. Referrer Spam List. --
+###############################################################################
+RefererSpam00=с.новым.годом.рф
+RefererSpam01=o-o-8-o-o
+RefererSpam02=happy.new.yeartwit.com
+RefererSpam03=traffic2cash.xyz
+RefererSpam04=free-social-buttons.xyz
+RefererSpam05=social-widget.xyz
+RefererSpam06=share-buttons.xyz
+RefererSpam07=website-analyzer.info
+RefererSpam08=trafficgenius.xyz
+RefererSpam09=topseoservice.co
+RefererSpam10=website-analyzer.info
+RefererSpam11=googlemare.com
+###############################################################################

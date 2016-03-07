@@ -1,7 +1,7 @@
 #!/bin/bash
 #### lnmp-72 v1.0.7
 ############################################################################
-source ./nginx-build.txt
+source ./nginx.txt
 ## Nginx Build on User Directory.
 echo "Start Nginx Build"
 mkdir -p ~/rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}/
