@@ -7,6 +7,7 @@ source ./config_init.txt
 ############################################################################
 # totem on Malware Infection. / uninstall.
 yum remove -y totem*
+yum -y install firewalld
 echo -e "Jp: ローカルセットアップを開始します。[y] / 既に一回このシェルを通している場合は [n]"
 echo -e "En: It will start the local setup. [y] / Already one time when it is passed through the shell [n]"
 read set_localnet

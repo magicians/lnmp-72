@@ -67,6 +67,18 @@ PHP_SESSION_COOKIE=On
 NGINX_USER_SESSION_DIR=/var/www/${CMS_CONFIG_PREFIX}
 #
 ###############################################################################
+## WP MariaDB Setup Config.
+###############################################################################
+# -- Database User Passwd.
+DB_USER_PASSWD=
+#
+# -- CREATE DB Name.
+CREATE_DB_NAME=
+#
+# -- Database User Name.
+DB_USER_NAME=
+#
+###############################################################################
 ## concrete5 Nginx Setup Config.
 ###############################################################################
 #

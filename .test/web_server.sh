@@ -303,7 +303,6 @@ echo -e "MariaDB conf Edit."
 sed -i "10a\innodb_buffer_pool_size = ${DB_BUFFER_POOL_SIZE}" ${MARIADB_CONF_DIR}
 sed -i "11a\innodb_log_file_size = ${DB_LOG_FILE_SIZE}" ${MARIADB_CONF_DIR}
 sed -i "12a\default-storage-engine = ${DB_STORAGE_ENGINE}\n" ${MARIADB_CONF_DIR}
-#sed -i "s|\r||g" ${MARIADB_CONF_DIR}
 vim ${MARIADB_CONF_DIR}
 ####
 echo -e "Jp: Databaseを有効化します。[y]"

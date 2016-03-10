@@ -22,7 +22,7 @@ NGINX_LARGE_CLIENT_HEAD=8k
 NGINX_PROXY_BUFFER_SIZE=16k
 #
 # -- Nginx Deny File and Dir.
-NGINX_DENY_ALL_DIR=ht\|git\|svn\|user\.ini\|php\.ini
+NGINX_DENY_ALL_DIR=ht\|git\|svn\|user\.ini
 #
 # -- Nginx Cache File Setting.
 NGINX_LOCATION_ASCII_FILE=txt\|xml\|html\?\|js\|css\|gz

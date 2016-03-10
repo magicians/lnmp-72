@@ -94,26 +94,8 @@ sed -i "414a\php_admin_value[error_log] = ${APACHE_LOG_DIRECTORY}/${CMS_CONFIG_P
 sed -i "s|php_value\[session.save_path\]|;\0|g" /etc/php-fpm.d/${CMS_CONFIG_PREFIX}.conf
 sed -i "s|php_value\[soap.wsdl_cache_dir\]|;\0|g" /etc/php-fpm.d/${CMS_CONFIG_PREFIX}.conf
 sed -i "420a\php_value[session.save_path]    = ${NGINX_USER_SESSION_DIR}" /etc/php-fpm.d/${CMS_CONFIG_PREFIX}.conf
-sed -i "421a\php_value[soap.wsdl_cache_dir]    = ${PHP_FPM_SOAP_CACHE_DIR}" /etc/php-fpm.d/${CMS_CONFIG_PREFIX}.conf
+sed -i "421a\php_value[soap.wsdl_cache_dir]  = ${PHP_FPM_SOAP_CACHE_DIR}" /etc/php-fpm.d/${CMS_CONFIG_PREFIX}.conf
 vim /etc/php-fpm.d/${CMS_CONFIG_PREFIX}.conf
-#
-cat <<EOF > ${APACHE_FILE_DIRECTORY}/${CMS_CONFIG_PREFIX}/.user.ini
-display_errors = On
-error_log = ${APACHE_LOG_DIRECTORY}/${CMS_CONFIG_PREFIX}_php_error.log
-memory_limit = ${PHP_MEM_LIMIT}
-post_max_size = ${PHP_POST_MAX}
-upload_max_filesize = ${PHP_UPLOAD_MAX}
-session.cookie_secure = ${PHP_SESSION_COOKIE}
-session.save_path = ${NGINX_USER_SESSION_DIR}
-mbstring.language = Japanese
-mbstring.internal_encoding = ${SERVER_DEFAULT_CHARSET}
-mbstring.encoding_translation = Off
-mbstring.http_input = pass
-mbstring.http_output = pass
-mbstring.detect_order = auto
-soap.wsdl_cache_dir = ${PHP_FPM_SOAP_CACHE_DIR}
-EOF
-vim ${APACHE_FILE_DIRECTORY}/${CMS_CONFIG_PREFIX}/.user.ini
 #
 ############################################################################
 #### Database Setup Start.
@@ -200,6 +182,8 @@ server {
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
 
+    location ~ /php.ini { deny  all; }
+
     location / {
         if (\$server_port = 80) {
             rewrite (.*) https://\$host\$request_uri last;
@@ -266,7 +250,7 @@ server {
     #resolver_timeout             10s;
 
     # HTTP/2.0
-    # include h2_param;
+    include ${CMS_CONFIG_PREFIX}_h2_param;
 
     root   ${APACHE_FILE_DIRECTORY}/${CMS_CONFIG_PREFIX};
     index ${NGINX_INDEX_FILE_LIST};
@@ -275,6 +259,8 @@ server {
     access_log  ${APACHE_LOG_DIRECTORY}/nginx_${CONFIG_CMS_DOMAIN}_ssl.log;
 
     location ~ /\.(${NGINX_DENY_ALL_DIR}) { deny  all; }
+
+    location ~ /php.ini { deny  all; }
 
     # Header Control
     #
