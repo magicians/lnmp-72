@@ -139,6 +139,11 @@ echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" >> \$IPv
 #HTTPS
 echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 
+#FTPからの接続は破棄
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 20 -j DROP" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 21 -j DROP" >> \$IPv4_TABLES_CONF_TMP
+echo "-A INPUT -p tcp -m state --state NEW -m tcp --dport 23 -j DROP" >> \$IPv4_TABLES_CONF_TMP
+
 #LOCAL IP Addr ACCEPT, プライベートネットワークを構築している場合のみ変更する
 echo "-A INPUT -s ${LOCAL_IP_ADDR} -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
 echo "-A INPUT -d ${LOCAL_IP_ADDR} -j ACCEPT" >> \$IPv4_TABLES_CONF_TMP
