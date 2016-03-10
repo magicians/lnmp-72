@@ -2,11 +2,12 @@
 #### lnmp-72 v1.0.7
 ############################################################################
 source ./initfile
-source ./base.txt
-source ./config_init.txt
 ############################################################################
-source ./server.txt
-source ./apps.txt
+source ./01_base.txt
+source ./not_edit_init.txt
+############################################################################
+source ./02_server.txt
+source ./03_apps.txt
 ############################################################################
 clear
 # Default GZIP Setting.

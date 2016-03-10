@@ -29,12 +29,12 @@ ln -s ${INSTALL_PATH}/Webserver/03-cms-setup ${INSTALL_PATH}/03.DB-SETUP.sh
 ##############################################
 else
 ##############################################
-ln -s ${INSTALL_PATH}/.test/text/base.txt ${INSTALL_PATH}/base.txt
-ln -s ${INSTALL_PATH}/.test/text/server.txt ${INSTALL_PATH}/server.txt
-ln -s ${INSTALL_PATH}/.test/text/apps.txt ${INSTALL_PATH}/apps.txt
-ln -s ${INSTALL_PATH}/.test/text/config_init.txt ${INSTALL_PATH}/config_init.txt
-ln -s ${INSTALL_PATH}/.test/text/_wp.txt ${INSTALL_PATH}/_wp.txt
-ln -s ${INSTALL_PATH}/.test/text/_c5.txt ${INSTALL_PATH}/_c5.txt
+ln -s ${INSTALL_PATH}/.test/text/base.txt ${INSTALL_PATH}/01_base.txt
+ln -s ${INSTALL_PATH}/.test/text/server.txt ${INSTALL_PATH}/02_server.txt
+ln -s ${INSTALL_PATH}/.test/text/apps.txt ${INSTALL_PATH}/03_apps.txt
+ln -s ${INSTALL_PATH}/.test/text/config_init.txt ${INSTALL_PATH}/not_edit_init.txt
+ln -s ${INSTALL_PATH}/.test/text/_wp.txt ${INSTALL_PATH}/04_wp.txt
+ln -s ${INSTALL_PATH}/.test/text/_c5.txt ${INSTALL_PATH}/05_c5.txt
 ##############################################
 chmod 600 ${INSTALL_PATH}/.test/text/*.txt
 ##############################################
@@ -46,8 +46,8 @@ echo -e "En: LNMP(Linux, Nginx, MariaDB, PHP7.0 or PHP5.6)"
 ln -s ${INSTALL_PATH}/.test/base_server.sh ${INSTALL_PATH}/01.DEFAULT-SETUP.sh
 ln -s ${INSTALL_PATH}/.test/web_server.sh ${INSTALL_PATH}/O2.WEBSERVER-SETUP.sh
 ln -s ${INSTALL_PATH}/.test/app_server.sh ${INSTALL_PATH}/03.DB-SETUP.sh
-ln -s ${INSTALL_PATH}/.test/_wordpress.sh ${INSTALL_PATH}/_wordpress.sh
-ln -s ${INSTALL_PATH}/.test/_concrete5.sh ${INSTALL_PATH}/_concrete5.sh
+ln -s ${INSTALL_PATH}/.test/_wordpress.sh ${INSTALL_PATH}/04.wordpress.sh
+ln -s ${INSTALL_PATH}/.test/_concrete5.sh ${INSTALL_PATH}/05.concrete5.sh
 ##############################################
 fi
 ##############################################

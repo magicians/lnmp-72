@@ -2,11 +2,12 @@
 #### lnmp-72 v1.0.7
 ############################################################################
 source ./initfile
-source ./base.txt
-source ./config_init.txt
 ############################################################################
-source ./apps.txt
-source ./_wp.txt
+source ./01_base.txt
+source ./not_edit_init.txt
+############################################################################
+source ./03_apps.txt
+source ./04_wp.txt
 ############################################################################
 clear
 echo -e "Nginx: ${CONFIG_CMS_DOMAIN} / SSL Setup"

@@ -2,10 +2,11 @@
 #### lnmp-72 v1.0.7
 ############################################################################
 source ./initfile
-source ./base.txt
-source ./config_init.txt
 ############################################################################
-source ./server.txt
+source ./01_base.txt
+source ./not_edit_init.txt
+############################################################################
+source ./02_server.txt
 ############################################################################
 echo -e "Jp: WebServer(Nginx)をインストールします。[y] / 既に一回このシェルを通している場合は [n]"
 echo -e "En: It will install the WebServer (Nginx). [y] / Already one time when it is passed through the shell [n]"
