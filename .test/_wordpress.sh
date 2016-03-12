@@ -471,6 +471,20 @@ if [ ${setwpsminstall} = "y" ] ; then
 curl -O https://downloads.wordpress.org/plugin/wp-sitemanager.1.1.8.zip
 unzip wp-sitemanager.1.1.8.zip
 fi
+clear
+# WP-SiteManager
+echo -e "Jp: ConoHa Object Sync をインストールしますか？ [y/n]"
+echo -e "En: Do you want to install ConoHa Object Sync? [y/n]"
+read setcosinstall
+if [ ${setcosinstall} = "y" ] ; then
+curl -O https://downloads.wordpress.org/plugin/conoha-object-sync.zip
+unzip conoha-object-sync.zip
+cd ${APACHE_FILE_DIRECTORY}/${CMS_CONFIG_PREFIX}/${WP_CONF_DIR}/wp-content/plugins/conoha-object-sync
+wget https://github.com/hironobu-s/conoha-ojs-sync/blob/master/composer.json
+curl -sS https://getcomposer.org/installer | sudo php
+sudo ./composer.phar install
+cd ${APACHE_FILE_DIRECTORY}/${CMS_CONFIG_PREFIX}/${WP_CONF_DIR}/wp-content/plugins/ 
+fi
 ####
 rm -f *.zip
 ####
